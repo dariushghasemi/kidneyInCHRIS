@@ -12,8 +12,9 @@ Several issues have been created to track the progress in the project.
 4. Mapping phenotype to genotypes via GWAS
 5. Comparing replicated variants effect magnitude with discovery studies
 6. Comparing the 147 CKDGen Loci in CHRIS
-7. Excluding batch effects using transformation
-8. Phenome-wide mediation analysis
-9. Kidney interaction with Thyroid function
-10. Sensitivity Analyses
-11. Interrogating 163 replicated SNPs in Phenoscanner
+7. Excluding batch effects from the health traits using transformation
+8. Extracting dosage level of the replicated SNPs from VCF file
+9. Phenome-wide mediation analysis
+10. Kidney interaction with Thyroid function
+11. Sensitivity Analyses
+12. Interrogating 163 replicated SNPs in Phenoscanner
