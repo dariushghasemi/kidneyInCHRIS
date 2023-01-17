@@ -16,7 +16,7 @@ Several issues have been created to track the progress in the project.
 8. Extracting dosage level of the replicated SNPs from VCF file
 9. Phenome-wide mediation analysis
 10. Kidney interaction with Thyroid function
-* [11. Sensitivity Analyses](#sensitivity-analyses)
+* [11- Sensitivity Analyses](#11-sensitivity-analyses)
 12. Interrogating 163 replicated SNPs in Phenoscanner
 ___________________________________________________________________________________________________________
 
