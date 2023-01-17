@@ -16,5 +16,28 @@ Several issues have been created to track the progress in the project.
 8. Extracting dosage level of the replicated SNPs from VCF file
 9. Phenome-wide mediation analysis
 10. Kidney interaction with Thyroid function
-11. Sensitivity Analyses
+* [11. Sensitivity Analyses](#sensitivity-analyses)
 12. Interrogating 163 replicated SNPs in Phenoscanner
+___________________________________________________________________________________________________________
+
+
+
+
+## 11. Sensitivity Analyses
+### Sensitivity of SNPs' dosage to having missing in FT3/4
+Here we test if there is any difference between the dosage level for the replicated SNPs for those cases having missing in FT3 or FT4 due to the artifacts resulted from using a two-sided Wilcoxon test (alpha = 0.05):
+`wilcox.test(SNP ~ FT3/4_indicator, data = vcfReg)`
+
+### Sensitivity of the FT3/4-adjusted association of SNPs on log(eGFR) to Municipality
+- Here we test how the association of SNPs on log(eGFR) changes when we adjust the LR model both for FT3/4 and municipality. This variable indicates the unmeasured differences in allele frequency of the SNPs between different villages in the region where CHRIS study was conducted. Truly, this idea is coming from where we thought adding municipality could affect the SNP-Kidney adjusted association FT3 or FT4, and in this way we might capture the batch effects in order to have an unbiased idea of the interaction between the kidney and thyroid traits.
+- Thus, we tested the association of the SNP and kidney adjusted for FT3/4 once without adjusting for municipality and once with adjusting for it as below:
+```R
+#Sensitivity test for FT3:
+log(eGFR) ~ SNP +FT3 + Sex + Age vs. log(eGFR) ~ SNP +FT3 + Sex + Age + Municipality
+
+#Sensitivity test for FT4:
+log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipality
+```
+
+## 12. Interrogating 163 replicated SNPs in Phenoscanner
+
