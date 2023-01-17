@@ -13,7 +13,7 @@ Several issues have been created to track the progress in the project. Here is t
 * [8. Extracting dosage level of the replicated SNPs from VCF file](#)
 * [9. Phenome-wide mediation analysis](#)
 * [10. Kidney interaction with Thyroid](#10.kidney-interaction-with-thyroid)
-* [11 - Sensitivity Analyses](#11-sensitivity-analyses)
+* [11- Sensitivity Analyses](#11-sensitivity-analyses)
 * [12. Interrogating SNPs in Phenoscanner](#12-interrogating-snps-in-phenoscanner)
 ___________________________________________________________________________________________________________
 
@@ -24,7 +24,7 @@ ________________________________________________________________________________
 
 
 
-## 11 - Sensitivity Analyses
+## 11. Sensitivity Analyses
 ### Sensitivity of SNPs' dosage to having missing in FT3/4
 - Here we test if there is any difference between the dosage level for the replicated SNPs for those cases having missing in FT3 or FT4 due to the artifacts resulted from using a two-sided Wilcoxon test (alpha = 0.05):
 ```R
