@@ -24,7 +24,7 @@ ________________________________________________________________________________
 
 
 
-## 11- Sensitivity Analyses
+## 11 - Sensitivity Analyses
 ### Sensitivity of SNPs' dosage to having missing in FT3/4
 - Here we test if there is any difference between the dosage level for the replicated SNPs for those cases having missing in FT3 or FT4 due to the artifacts resulted from using a two-sided Wilcoxon test (alpha = 0.05):
 ```R
@@ -41,5 +41,5 @@ log(eGFR) ~ SNP +FT3 + Sex + Age vs. log(eGFR) ~ SNP +FT3 + Sex + Age + Municipa
 log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipality
 ```
 
-## 12- Interrogating 163 replicated SNPs in Phenoscanner
+## 12 - Interrogating 163 replicated SNPs in Phenoscanner
 
