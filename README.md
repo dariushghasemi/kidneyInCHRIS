@@ -10,9 +10,9 @@ Several issues have been created to track the progress in the project. Here is t
 * [5- Comparing replicated variants effect magnitude with discovery studies](#)
 * [6- Comparing the 147 CKDGen Loci in CHRIS](#)
 * [7- Excluding batch effects from the health traits using transformation](#)
-* [8- Extracting dosage level of the replicated SNPs from VCF file](#)
-* [9- Phenome-wide mediation analysis](#)
-* [10- Kidney interaction with Thyroid](#10.kidney-interaction-with-thyroid)
+* [8- Extracting dosage from VCF](#8-extracting-dosage-from-vcf)
+* [9- Phenome-wide mediation analysis](#9-phenome-wide-mediation-analysis)
+* [10- Kidney interaction with Thyroid](#10-kidney-interaction-with-thyroid)
 * [11- Sensitivity Analyses](#11-sensitivity-analyses)
 * [12- Interrogating SNPs in Phenoscanner](#12-interrogating-snps-in-phenoscanner)
 ___________________________________________________________________________________________________________
@@ -35,12 +35,16 @@ ________________________________________________________________________________
 
 ## 7. Excluding batch effects from the health traits using transformation
 
-## 8. Extracting dosage level of the replicated SNPs from VCF file
+## 8. Extracting dosage from VCF
+- To do association tests analysis, we extractied the dosage level of the 163 replicated SNPs from imputed VCF files. To do so, we used bcftools:
+```bash
+
+```
 
 ## 9. Phenome-wide mediation analysis
 
 ## 10. Kidney interaction with Thyroid
-
+- This analysis have been throughly explained earlier in this [repository](https://github.com/DariushG3/SNP-TSHcat_Interaction_Model)
 
 
 ## 11. Sensitivity Analyses
