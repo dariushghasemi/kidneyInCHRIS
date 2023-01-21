@@ -1,4 +1,4 @@
-<img src="https://github.com/DariushG3/kidneyInCHRIS/Untitled.jpg" width=150 align="right">
+<img src="https://github.com/DariushG3/kidneyInCHRIS/blob/main/Untitled.jpg" width=250 align="right">
 
 ## KidneyInCHRIS part of TrainCKDis Horizon 2020 EU Project
 Genetic determinants of Kidney function in The **C**orporative **H**ealth **R**esearch **I**n **S**outh Tyrol (CHRIS) study
