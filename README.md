@@ -48,7 +48,14 @@ ________________________________________________________________________________
 ## 10. Kidney interaction with Thyroid
 - This analysis have been throughly explained earlier in this [repository](https://github.com/DariushG3/SNP-TSHcat_Interaction_Model)
 - As we observed the significants interaction for two SNPs out of 3 in one replicated locus, we tried to elucidate this findings. By centralizing TSH (0-mean-centered) we realized adjustment in SNP regression coefficients but still interaction effects and the corresponding P-values remained stable.
-- Another important thing we found was that the significant interaction only occurs when we exclude the cases with cancers/renal carcinoma/alternation of thyroid function due to pregnancy which were ~9,700 individuals. If we apply the previous model on the entire CHRIS 10K consisting of ~10,140 individuals the significance of interaction terms goes away and there would not be any significant interaction antymore (03-Feb-23).
+- Another important thing we found was that the significant interaction only occurs when we exclude the cases with cancers/renal carcinoma/alternation of thyroid function due to pregnancy which were ~9,700 individuals. If we apply the previous model on the entire CHRIS 10K consisting of ~10,140 individuals the significance of interaction terms goes away and there would not be any significant interaction antymore.
+
+```R
+# Regular TSH levels
+lm(eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
+```
+
+- We replaced log(eGFR) with eGFRw.log.Res in the above model and ran it again. The results stay consistent in a way that those two variants with significant inetraction with TSH remain significant. At the end, in this way we can avoid over-adjustment of the covariates: age and sex (03-Feb-23).
 
 ## 11. Sensitivity Analyses
 ### Sensitivity of SNPs' dosage to having missing in FT3/4
