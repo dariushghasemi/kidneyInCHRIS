@@ -47,7 +47,8 @@ ________________________________________________________________________________
 
 ## 10. Kidney interaction with Thyroid
 - This analysis have been throughly explained earlier in this [repository](https://github.com/DariushG3/SNP-TSHcat_Interaction_Model)
-
+- As we observed the significants interaction for two SNPs out of 3 in one replicated locus, we tried to elucidate this findings. By centralizing TSH (0-mean-centered) we realized adjustment in SNP regression coefficients but still interaction effects and the corresponding P-values remained stable.
+- Another important thing we found was that the significant interaction only occurs when we exclude the cases with cancers/renal carcinoma/alternation of thyroid function due to pregnancy which were ~9,700 individuals. If we apply the previous model on the entire CHRIS 10K consisting of ~10,140 individuals the significance of interaction terms goes away and there would not be any significant interaction antymore (03-Feb-23).
 
 ## 11. Sensitivity Analyses
 ### Sensitivity of SNPs' dosage to having missing in FT3/4
