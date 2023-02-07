@@ -31,6 +31,8 @@ ________________________________________________________________________________
 ## 4. Conducting GWAS on renal function
 - We mapped the genotypes of CHRIS 10K participants to our interested phenotype, __ln(eGFR)__, by conducting genome-wide association study (GWAS) analysis.
 
+- To draw regional association plot for the lead variant of each replicated loci, we needed to update the LocusZoom SQLite database to show the recombination rate and it hotspots in the plot for SNPs position in build 38 (GRCh38). See more info in [issue 10](https://github.com/DariushG3/kidneyInCHRIS/issues).
+
 ## 5. Comparing replicated variants effect magnitude with discovery studies
 
 ## 6. Comparing the 147 CKDGen Loci in CHRIS
