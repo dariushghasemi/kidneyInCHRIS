@@ -51,7 +51,13 @@ ________________________________________________________________________________
 - This analysis have been throughly explained earlier in this [repository](https://github.com/DariushG3/SNP-TSHcat_Interaction_Model)
 - As we observed the significants interaction for two SNPs out of 3 in one replicated locus, we tried to elucidate this findings. By centralizing TSH (0-mean-centered) we realized adjustment in SNP regression coefficients but still interaction effects and the corresponding P-values remained stable.
 - Another important thing we found was that the significant interaction only occurs when we exclude the cases with cancers/renal carcinoma/alternation of thyroid function due to pregnancy which were ~9,700 individuals. If we apply the previous model on the entire CHRIS 10K consisting of ~10,140 individuals the significance of interaction terms goes away and there would not be any significant interaction antymore.
-
+- We modified our exclusion criteria in the way that we omitted the observations with:
+- 1. missing values on both TSH and thyroid drugs (n = 4)
+- 2. thyroid cancer (n = 16)
+- 3. kidney cancer (n = 1)
+- 4. goitre (n = 277)
+- 5. operation on thyroid gland (n = 312)
+- After excluding these individuals, exactly 9,730 people remined out of 10,146 for SNP-TSH interaction analysis (10-Feb-2023).
 ```R
 # Regular TSH levels
 lm(eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
