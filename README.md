@@ -58,7 +58,7 @@ lm(eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + P
 
 - We replaced log(eGFR) with eGFRw.log.Res in the above model and ran it again. The results stay consistent in a way that those two variants with significant inetraction with TSH remain significant. At the end, in this way we can avoid over-adjustment of the covariates: age and sex (03-Feb-23).
 
-- We modified our exclusion criteria in the way that we omitted the observations with:
+- We modified our exclusion criteria in the way that we omitted the observations with (09-Feb-2023):
 1. missing values on both TSH and thyroid drugs (n = 4)
 2. thyroid cancer (n = 16)
 3. kidney cancer (n = 1)
@@ -66,6 +66,16 @@ lm(eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + P
 5. operation on thyroid gland (n = 312)
 
 - After excluding these individuals, exactly 9,730 people remined out of 10,146 for SNP-TSH interaction analysis (10-Feb-2023).
+- Thus, the interaction models were executed as follows:
+```R
+# Interaction of SNP-TSH
+lm(log(eGFR) ~ SNP * TSH     + PC1 + ... + PC10)
+# Interaction of SNP-thyroid_disease
+lm(log(eGFR) ~ SNP * TSH_cat + PC1 + ... + PC10)
+```
+- At the end, we found there was no significant interaction between kidney variants neither TSH nor thyroid disease at 0.05/11 level (10-Feb-2023).
+
+
 
 
 ## 11. Sensitivity Analyses
