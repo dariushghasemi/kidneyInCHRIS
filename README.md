@@ -74,7 +74,7 @@ lm(log(eGFR) ~ SNP * TSH     + PC1 + ... + PC10)
 lm(log(eGFR) ~ SNP * TSH_cat + PC1 + ... + PC10)
 ```
 - At the end, we found there was no significant interaction between kidney variants neither TSH nor thyroid disease at 0.05/11 level (10-Feb-2023).
-
+- Rstudio crashed, so that the results are not reproduable anymore (11-Feb-2023).
 
 
 
