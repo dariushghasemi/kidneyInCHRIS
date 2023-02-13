@@ -56,7 +56,7 @@ ________________________________________________________________________________
 lm(eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
 ```
 
-- We replaced log(eGFR) with eGFRw.log.Res in the above model and ran it again. The results stay consistent in a way that those two variants with significant inetraction with TSH remain significant. At the end, in this way we can avoid over-adjustment of the covariates: age and sex (03-Feb-23).
+- We replaced log(eGFR) with eGFRw.log.Res in the above model and ran it again. The results stay consistent in a way that those two variants with significant inetraction with TSH remained significant. At the end, in this way we can avoid over-adjustment of the covariates: age and sex (03-Feb-23).
 
 - We modified our exclusion criteria in the way that we omitted the observations with (09-Feb-2023):
 1. missing values on both TSH and thyroid drugs (n = 4)
@@ -75,6 +75,14 @@ lm(log(eGFR) ~ SNP * TSH_cat + PC1 + ... + PC10)
 ```
 - At the end, we found there was no significant interaction between kidney variants neither TSH nor thyroid disease at 0.05/11 level (10-Feb-2023).
 - Rstudio crashed, so that the results are not reproduable anymore (11-Feb-2023).
+- We decided to use the natural log-transformed winsorized eGFR (so called eGFRw.log) for interaction analysis rather than __log(eGFR)__. Previously we had found a significant interaction with TSH in one single locus.
+```R
+# Interaction of SNP-TSH
+lm(eGFRw.log ~ SNP * TSH + PC1 + ... + PC10)
+# Interaction of SNP-thyroid_disease
+lm(eGFRw.log ~ SNP * TSH_cat + PC1 + ... + PC10)
+```
+- After changing the outcome, we realized if we use as __eGFRw.log__ the outcome, we will have two significant n=interaction terms for the SNPs with TSH in one locus (13-Feb-2023).
 
 
 
