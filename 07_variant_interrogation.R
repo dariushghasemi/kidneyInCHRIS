@@ -108,42 +108,15 @@ results_step3_long_pscanner <-
 
 ggsave("23-Jun-22_Frequency of the traits found in Phenoscanner at GWS level.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
+
+
 #-----------------------------------------------------#
-#---------------- step 3 + phenoscanner --------------
-#-----------------------------------------------------#
-
-results_step3_long_pscanner %>% View
-  select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
-  rename(SNPid = hg38_coordinates) %>%
-  #filter(trait == "Creatinine levels" | trait == "Creatinine" | trait == "Serum creatinine")
-  #filter(trait == "Serum urate")
-  mutate(
-    trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
-    trait = str_replace(trait, "Serum urate",                                   "Urate"),
-    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium",    "Magnesium"),
-    trait = str_replace(trait, "Activated partial thromboplastin time",         "APTT"),
-    trait = str_replace(trait, "Diastolic blood pressure",                      "DBP")
-    ) %>%
-  filter(
-    str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"),
-    !if_all(c(beta, se), is.na)
-         ) %>%
-         #!is.na(as.numeric(p)))
-  full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
-                                          "Locus" = "Locus",
-                                          "pheno" = "trait")) %>%
-  filter(Locus == "SLC34A1") %>% 
-  View
-
-
-
-
-   #-----------------------------------------------------#
 #--------------------- OpenTargets -------------------
 #-----------------------------------------------------#
 
-#Reading the traits found to be related 
-#with the 162 SNPs in OpenTargets by David
+# Reading the traits found to be related 
+# with the 162 SNPs in OpenTargets by David
+
 opentargets_David <- 
   read.table("Dariush_SNPs_OpenTargets_4_REPORT.txt", header = T, sep = "\t")
 
@@ -153,8 +126,8 @@ opentargets <-
   filter(pval <= 5E-8) %>%
   mutate(trait = factor(traitReported)) #%>% #View()
 #mutate(trait = fct_reorder(traitReported, n, .desc = TRUE))
-
 #----------#
+
 #opentargets_count <- 
 opentargets %>%
   #group_by(Locus) %>%
@@ -173,8 +146,8 @@ opentargets %>%
         axis.text.y  = element_text(size = 5,  face="bold"),
         legend.position = c(.85, .4))+
   labs(x = "Frequency of the traits in OpenTargets", y = NULL)
-
 #----------#
+
 ggplot(opentargets, aes(y = forcats::fct_rev(forcats::fct_infreq(trait)), fill = Locus)) +
   geom_bar(width = .85) +
   # geom_text(opentargets_count, aes(label = n), 
@@ -194,11 +167,13 @@ ggplot(opentargets, aes(y = forcats::fct_rev(forcats::fct_infreq(trait)), fill =
 ggplot(opentargets)+ #, fill = Locus
   geom_col(aes(reorder(trait, n), n, fill = Locus), position = "dodge")
 
-ggsave("13-Aug-22_Frequency of the traits found in OpenTargets at GWS level_grouped_by_Locus4.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("13-Aug-22_Frequency of the traits found in OpenTargets at GWS level grouped by Locus4.png", 
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+
 
 
 #-----------------------------------------------------#
-#--------------------- Thyroidomix --------------------
+#--------------------- Thyroidomix -------------------
 #-----------------------------------------------------#
 
 #Reading the summary results of the Thyroidomix Meta-GWAS study
@@ -228,5 +203,59 @@ repSNPs %>%
          SEBETA, StdErr.Kidney, StdErr.Thyroid, 
          PVALUE, P.value.Kidney, P.value.Thyroid) %>% View()
   #write.csv(., "25-Aug-2022_Significant FT4-associated SNPs found by Thyroidomics at alpha05.csv", row.names = FALSE)
+
+
+
+#-----------------------------------------------------#
+#---------------- step 3 + phenoscanner --------------
+#-----------------------------------------------------#
+
+results_step3_long_pscanner %>%
+select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
+  rename(SNPid = hg38_coordinates) %>%
+  #filter(trait == "Creatinine levels" | trait == "Creatinine" | trait == "Serum creatinine")
+  #filter(trait == "Serum urate")
+  mutate(
+    trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
+    trait = str_replace(trait, "Serum urate",                                   "Urate"),
+    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium",    "Magnesium"),
+    trait = str_replace(trait, "Activated partial thromboplastin time",         "APTT"),
+    trait = str_replace(trait, "Diastolic blood pressure",                      "DBP")
+  ) %>%
+  filter(
+    str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"),
+    !if_all(c(beta, se), is.na)
+  ) %>%
+  # Joining the results of OpenTrgets look-up
+  #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
+  # Joining the results of step 3
+  full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
+                                          "Locus" = "Locus",
+                                          "pheno" = "trait")) %>%
+  filter(
+    #Locus == "SLC34A1",
+    !is.na(as.numeric(p)),
+    #!if_any(c(p, pval), is.na)
+    ) %>% 
+  View
+
+
+
+#-----------------------------------------------------#
+#------------- GWAScatalog + phenoscanner ------------
+#-----------------------------------------------------#
+
+
+results_step3_long_pscanner %>% colnames()
+
+opentargets %>% 
+  filter(str_detect(traitReported, "serum"))
+
+
+
+
+
+
+
 
  
