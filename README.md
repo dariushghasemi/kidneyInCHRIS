@@ -84,6 +84,9 @@ lm(eGFRw.log ~ SNP * TSH_cat + PC1 + ... + PC10)
 ```
 - After changing the outcome, we realized if we use as __eGFRw.log__ the outcome, we will have two significant n=interaction terms for the SNPs with TSH in one locus (13-Feb-2023).
 
+- Here we tried to depict the interaction of the dosage with TSH levels for the two variants with significant interaction effect (15-Feb-23).
+
+
 
 
 ## 11. Sensitivity Analyses

@@ -220,7 +220,8 @@ missPlot <- function(FT)
           legend.position = c(.93, .265))
     
   # Save the plot
-  ggsave(paste0("13-Jan-23_Association of SNPs with ln(eGFR) respect to having missing in ", FT, ".png"), last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+  ggsave(paste0("13-Jan-23_Association of SNPs with ln(eGFR) respect to having missing in ", FT, ".png"),
+         last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 }
 
 lapply(c("FT3", "FT4"), missPlot)

@@ -2,6 +2,12 @@
 #       Interaction with Thyroid
 #=========================================#
 
+library(interactions)
+library(tidyverse)
+library(reshape2)
+library(tidyr)
+library(knitr) #for printing html-friendly tables.
+
 #-----------------------------------------------------#
 #-------------- Preparing data for interaction -------
 #-----------------------------------------------------#
@@ -32,10 +38,22 @@ vcfReg_TSHmod <-
 # summarise(n = n()) %>%
 # spread(TSH_cat, n)
 
-#-------------#
 
 
+#-----------------------------------------------------#
+#-------------- Emerging baches effect  --------------
+#-----------------------------------------------------#
+
+# TSH vs. TSH Instruments
+chris %>% 
+  select(TSH, TSH.Ins) %>% 
+  pivot_wider(names_from = TSH.Ins, values_from = TSH, names_prefix = "TSH_") %>% 
+  head()
+
 #-------------#
+# Some randome ideas for interaction
+#-------------#
+
 anova(lm(eGFRw.log.Res ~ TSH_cat * `chr5:177386403` + Municipality, data = vcfReg),
       lm(eGFRw.log.Res ~ TSH_cat + `chr5:177386403` + Municipality, data = vcfReg))
 
@@ -45,19 +63,6 @@ lapply("TSH", function(x) quantile(chris[x], probs=seq(0,1,0.1), na.rm=TRUE))
 
 vcfReg[vcfReg$Cancer == 2 | is.na(vcfReg$Cancer), "TSH_cat"]
 vcfReg[vcfReg$Cancer != 1,]
-
-#-----------------------------------------------------#
-#-------------- Emerging interaction  ----------------
-#-----------------------------------------------------#
-
-library(reshape2)
-library(tidyverse)
-
-chris %>% 
-  select(TSH, TSH.Ins) %>% 
-  pivot_wider(names_from = TSH.Ins, values_from = TSH, names_prefix = "TSH_") %>% 
-  head()
-
 
 #-----------------------------------------------------#
 #      Visualizing TSH for different instruments
@@ -83,13 +88,13 @@ chris %>%
   theme_classic()
 
 #-------------#
-#I'd be tempted to do 
+# I'd be tempted to do 
 ggsave2 <- function(plot, filename, ...) {
   ggplot2::ggsave(filename, plot, ...)
   invisible(plot)
 }
 
-#So you could then do 
+# So you could then do 
 plot %>% ggsave2("x.pdf") %>% ggsave2("x.png") %>% ggsave2("x.eps")
 
 
@@ -97,11 +102,7 @@ plot %>% ggsave2("x.pdf") %>% ggsave2("x.png") %>% ggsave2("x.eps")
 #-------------- Thyroid Questionnaire ----------------
 #-----------------------------------------------------#
 
-library(tidyr)
-library(knitr) #for printing html-friendly tables.
-
-#---------#
-#contingency table
+# Contingency table
 crossing_tables <- function(x){
   CHRISbase %>% 
     #mutate(TSH = replace(x0lp35, x0lp35 == "-89", NA)) %>%
@@ -114,6 +115,46 @@ crossing_tables <- function(x){
 }
 
 map(c("x0th00", "x0th01"), crossing_tables)
+
+
+
+#-----------------------------------------------------#
+#------------------- Kidney Questionnaire ------------
+#-----------------------------------------------------#
+
+phenodf$AID <- phenodf$FAM_ID
+Kidney$AID  <- as.character(Kidney$AID)
+chrisKidQue <- merge(Kidney, phenodf, by = "AID")
+#---------#
+
+chrisKidQue[] <- lapply(chrisKidQue, function(x) if(is.factor(x)) as.character(x) else x)
+
+
+#xlim(quantile(phenodf[,i], probs= 0.01, na.rm = TRUE), quantile(phenodf[,i], probs= 0.999, na.rm = TRUE)) + xlab(colnames(phenodf)[i])
+
+combn(c(2:5), 2) #combn(letters[1:4], 2)
+cchris<-as.matrix(expand.grid(2:3, 23:24))
+cchris<-t(as.matrix(expand.grid(colnames(chrisKidQue[,2:22]),colnames(chrisKidQue[,23:39]))))
+
+#-----------------------------------------------------#
+#library(gtools)
+
+pdf('Rplot46-PhenoKidneyViolin.pdf', width=15)
+for (i in 2:22){
+  for (j in 23:39){
+    print(ggplot(chrisKidQue, aes(chrisKidQue[,i], chrisKidQue[,j])) +
+            geom_violin(aes(fill = chrisKidQue[,i]), show.legend=FALSE, color = "steelblue") + 
+            geom_boxplot(width = 0.08) + theme_minimal() + #+ ylim(0,18)# + scale_x_discrete(labels=c("Male", "Female"))
+            xlab(colnames(chrisKidQue)[i]) +  ylab(colnames(chrisKidQue)[j]))
+  }
+}
+
+dev.off()
+#-----------------------------------------------------#
+sapply(2:22, function(i)
+  table(chrisKidQue[,i]))
+#print(colnames(chrisKidQue)[i])
+
 
 
 #-----------------------------------------------------#
@@ -148,37 +189,57 @@ regresModel <- function(data, mySNP, formula, vecTraits)
   return(r)
 }
 #---------#
-#Testing regression model function
-# regresModel(vcfReg_TSHmod,
+
+# Testing regression model function
+#regresModel(vcfReg_TSHmod,
 #            targets[1],  #vcfReg_TSHmod[targets[1:3]]
 #            paste("eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10"))
+#---------#
+
+# Forming principal components term of the model 
+PCs <- paste0("PC", 1:10, collapse = " + ")
 
 #---------#
 # Iterating regression model function
 # Linear interaction: TSH-SNP
-results_Kidney_TSH
-results_Kidney_TSH_eGFRw <-
-  map_dfr(targets[30:40], function(SNP) {
+
+results_Kidney_TSH <-
+  map_dfr(targets, function(SNP) {
     regresModel(vcfReg_TSHmod,
                 SNP, #vcfReg_TSHmod[,SNP],
-                paste("eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10"),
+                paste("eGFRw.log ~ SNP * TSH + Sex + Age +", PCs),
                 c(2:3,16))
-    }) %>% View
-  #filter(SNPid %in% tagSNPs$SNPid) %>% 
-  
-write.csv(results_Kidney_TSH,
-          "10-Feb-23_Interaction of kidney with thyroid (lnEGFR-TSH) adjusted for sex_age_PCs.csv",
-          row.names = FALSE, quote = FALSE)
+  }
+  )
+#---------#
 
-#------------------#
+# Save the results of linear interaction model
+write.csv(results_Kidney_TSH,
+          "13-Feb-23_Interaction of kidney with TSH (eGFRw.log-TSH) adjusted for sex age PCs.csv",
+          row.names = FALSE, quote = FALSE)
+#---------#
+
+# Table XX of the paper 
+results_Kidney_TSH %>%
+  filter(SNPid %in% tagSNPs$SNPid) %>% View
+
+
+
+#-----------------------------------------------------#
+#-------------- SNP:TSH_cat interaction ---------------
+#-----------------------------------------------------#
+
+
 # Non-linear interaction: TSH_cat-SNP
+
 results_Kidney_TSH_cat <-
     map_dfr(targets, function(SNP) {
       regresModel(vcfReg_TSHmod,
                   SNP,
-                  paste("log(eGFR) ~ SNP * TSH_cat + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10"),
+                  paste("eGFRw.log ~ SNP * TSH_cat + Sex + Age+", PCs),
                   c(2:4,17:18))
-      }) %>% 
+    }
+    ) %>% 
   rename_with(~ gsub("TSH_catHyperT", "Hyperthyrodism", .x, fixed = TRUE)) %>%
   rename_with(~ gsub("TSH_catHypoT",  "Hypothyrodism",  .x, fixed = TRUE)) %>%
   select(SNPid, Locus, starts_with(c("SNP_",
@@ -186,53 +247,28 @@ results_Kidney_TSH_cat <-
                                      "Hypothyrodism_",
                                      "SNP:Hyperthyrodism_",
                                      "SNP:Hypothyrodism_")))
-  #filter(SNPid %in% tagSNPs$SNPid) %>% #View
+#---------#
 
+# Save the results of non-linear interaction model
 write.csv(results_Kidney_TSH_cat,
-          "10-Feb-23_Interaction of kidney with thyroid disease (lnEGFR-TSH_cat) adjusted for sex_age_PCs.csv",
+          "13-Feb-23_Interaction of kidney with thyroid disease (eGFRw.log-TSH_cat) adjusted for sex age PCs.csv",
             row.names = FALSE, quote = FALSE)
+#---------#
+
+# Table XX of the paper 
+results_Kidney_TSH_cat %>% 
+  filter(SNPid %in% tagSNPs$SNPid) %>% View
+
+
+
+
 
 
 #-----------------------------------------------------#
 #--------------- TSH_cen-SNP interaction -------------
 #-----------------------------------------------------#
 
-# Visualizing SNP-TSH interaction
-lapply(c("chr8:23885208",
-         "chr8:23894869",
-         "chr8:23928559"), function(SNP){
-  
-  vcfReg %>%
-  select(eGFRw.log.Res, TSH, SNP) %>% #starts_with("chr8:")
-  #filter(!is.na(TSH_cat)) %>%
-  mutate(TSH_cen = scale(TSH, scale = F),
-         TSH_cat = case_when(TSH_cen < quantile(TSH, 1/3, na.rm = T) ~ "Hyperthyrodism",
-                             TSH_cen > quantile(TSH, 2/3, na.rm = T) ~ "Hypothyrodism",
-                             TRUE ~ "Normal TSH")) %>%
-  ggplot(aes(x = !!sym(SNP),
-             y = eGFRw.log.Res,
-             color = TSH_cat))+
-  #geom_point()+
-  #geom_violin()+
-  #geom_boxplot(aes(fill = TSH_cat), color = "grey", width = .01, position = position_dodge(2)) +
-  geom_smooth(method = lm, se = F) + 
-  #facet_wrap(~TSH_cat, nrow = 3) +
-  scale_color_manual(values = c("violetred1", "springgreen2", "turquoise2"),
-                     # labels = c("Hyperthyrodism",
-                     #            "Normal TSH",
-                     #            "Hypothyrodism"),
-                     name   = "categorized centered TSH") + 
-  theme_classic()
-  }) #ln(eGFR)
-
-ggsave("31-Jun-23_SNP-TSH interactions effect on eGFR spline method STC1 1st snp.png", width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
-
-"chr8:23885208"               
-"chr8:23894869"               
-"chr8:23928559"
-#---------#
-
-# Model the interaction id different levels of TSH
+# Model the interaction in different levels of TSH for STC1 locus
 
 # By default, scale() function will standardize the 
 # data (mean zero, unit variance). To indicate that
@@ -241,18 +277,18 @@ ggsave("31-Jun-23_SNP-TSH interactions effect on eGFR spline method STC1 1st snp
 
 #results_Kidney_TSH_cen <- 
 vcfReg_TSHmod %>%
-  select(AID, eGFR, TSH, TSH_cat, Age, Sex, starts_with(c("chr8", "PC"))) %>% 
-  mutate(eGFR.log = log(eGFR),
-         #TSH_cen  = scale(TSH, scale = F)
-         ) %>% 
+  select(AID, eGFR, eGFRw.log, TSH, TSH_cat, Age, Sex, starts_with(c("chr8", "PC"))) %>% 
+  # mutate(eGFR.log = log(eGFR),
+  #        #TSH_cen  = scale(TSH, scale = F)
+  #        ) %>% 
   pivot_longer(cols      = starts_with("chr"),
                names_to  = c("SNPid"),
                values_to = c("Dosage")) %>%
   group_by(SNPid) %>%
   nest() %>%
   mutate(
-    model_tsh = data  %>% map(~lm(eGFR.log ~ Dosage * TSH     + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data = .)),
-    model_cat = data  %>% map(~lm(eGFR.log ~ Dosage * TSH_cat + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data = .)),
+    model_tsh = data  %>% map(~lm(eGFRw.log ~ Dosage * TSH     + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data = .)),
+    model_cat = data  %>% map(~lm(eGFRw.log ~ Dosage * TSH_cat + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data = .)),
     tidy_tsh  = model_tsh %>% map(broom::tidy),
     tidy_cat  = model_cat %>% map(broom::tidy)) %>%
   unnest(tidy_tsh) %>%
@@ -282,9 +318,19 @@ write.csv(results_Kidney_TSH_,
 
 pdf('02-Feb-23_interaction comparisons.pdf', width=18, height = 18)
 
-map2(c("Dosage_estimate_nonCen", "TSH_cen_estimate", "`Dosage:TSH_nonCen_estimate`", "Dosage_p.value_nonCen.log", "TSH_nonCen_p.value.log", "Dosage_TSH_nonCen_p.value.log"),
-     c("Dosage_estimate_Cen", "TSH_cen_estimate", "`Dosage:TSH_cen_estimate`", "Dosage_p.value_Cen.log", "TSH_cen_p.value.log", "Dosage_TSH_cen_p.value.log"),
-     function(myvar1, myvar2){
+map2(c("Dosage_estimate_nonCen", 
+       "TSH_cen_estimate", 
+       "`Dosage:TSH_nonCen_estimate`", 
+       "Dosage_p.value_nonCen.log", 
+       "TSH_nonCen_p.value.log", 
+       "Dosage_TSH_nonCen_p.value.log"),
+     c("Dosage_estimate_Cen", 
+       "TSH_cen_estimate",
+       "`Dosage:TSH_cen_estimate`", 
+       "Dosage_p.value_Cen.log", 
+       "TSH_cen_p.value.log", 
+       "Dosage_TSH_cen_p.value.log"),
+     function(myvar1, myvar2) {
        results_Kidney_TSH_ %>%
          rename_with(~ gsub("TSH", "TSH_nonCen", .x, fixed = TRUE))%>%
          right_join(results_Kidney_TSH_cen,
@@ -297,16 +343,14 @@ map2(c("Dosage_estimate_nonCen", "TSH_cen_estimate", "`Dosage:TSH_nonCen_estimat
                 Dosage_p.value_Cen.log    = -log10(Dosage_p.value_Cen),
                 TSH_cen_p.value.log       = -log10(TSH_cen_p.value),
                 Dosage_TSH_cen_p.value.log= -log10(`Dosage:TSH_cen_p.value`)) %>%
-       ggplot(aes_string(x = myvar1,
-                  y = myvar2,
-                  color = "Locus")) +
-         geom_abline(lty = 2)+
-         geom_vline(xintercept = 0)+
-         geom_hline(yintercept = 0)+
-         geom_point(size = 2.5) +
-         labs(x = paste(myvar1, "in ln(eGFR) ~ Dosage * TSH + Sex + Age + PC1:10"),
-              y = paste(myvar2, "in ln(eGFR) ~ Dosage * TSH_cen + Sex + Age + PC1:10"))+
-         theme_classic()
+       ggplot(aes_string(x = myvar1, y = myvar2, color = "Locus")) +
+           geom_abline(lty = 2) +
+           geom_vline(xintercept = 0) +
+           geom_hline(yintercept = 0) +
+           geom_point(size = 2.5) +
+           labs(x = paste(myvar1, "in ln(eGFR) ~ Dosage * TSH + Sex + Age + PC1:10"),
+                y = paste(myvar2, "in ln(eGFR) ~ Dosage * TSH_cen + Sex + Age + PC1:10")) +
+           theme_classic()
      })
 
 dev.off()
@@ -316,278 +360,67 @@ dev.off()
 
 #---------#
 
-
-
 #-----------------------------------------------------#
-#-------------- SNP:TSH_cat interaction ---------------
+#--------------- Depicting interaction ---------------
 #-----------------------------------------------------#
 
-getCoefs <- function(SNP, trait){
-  myformulaB <- as.formula(eGFRw.log.Res ~ SNP)
-  myformula0 <- as.formula(eGFRw.log.Res ~ SNP +         + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
-  myformula1 <- as.formula(eGFRw.log.Res ~ SNP + TSH_cat + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
-  myformula2 <- as.formula(eGFRw.log.Res ~ SNP : TSH_cat + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
-  myformula3 <- as.formula(eGFRw.log.Res ~ SNP * TSH_cat + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
-  #myformulaN <- as.formula(eGFRw.log.Res ~ SNP + trait   + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10)
-  m <- lm(myformula3, data = vcfReg_TSHmod)
-  s <- coef(m)
-  t <- s[-1]
-  p <- summary(m)$coefficients[c(2:4,15:16), c(1,2,4)]#take the Beta, se, Pvalue for SNP term
-  return(p)
-}
-#---------#
-#retrieve & save a printed but unsaved console output history by: .Last.value
-View(.Last.value)  
-history(max.show = Inf) # full history
-#---------#
-#Betas
-resModelB <- map_df(vcfReg_TSHmod[targets], getCoefs) %>% rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`)
-resModel0 <- map_df(vcfReg_TSHmod[targets], getCoefs) %>% rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`)
-resModel1 <- map_df(vcfReg_TSHmod[targets], getCoefs) %>% rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`)
-resModel2 <- map_df(vcfReg_TSHmod[targets], getCoefs) %>% rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`)
-resModel3 <- do.call(rbind, map(vcfReg_TSHmod[targets], getCoefs))
-#---------#
 
-#Tabulating interaction model results in excel sheet 4 paper
-resModel3_4paper <-
-  resModel3 %>%
-  as.data.frame() %>%
-  #mutate(coef = rownames(resModel3)) %>% 
-  rownames_to_column(var = "coef") %>% 
-  rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`) %>% 
-  mutate(SNPid = rep(repSNPs$SNPid, each = 5),
-         Locus = rep(repSNPs$Locus, each = 5)) %>% View()
-  pivot_wider(id_cols = c(SNPid, Locus),
-              names_from = coef,
-              values_from = c(Beta, SE , Pvalue),
-              names_glue = "{coef}_{.value}") %>% View
-#as_tibble(., .name_repair = janitor::make_clean_names) %>%
-write.csv(resModel3_4paper, "05-May-2022_resModel3_interaction_Beta+SE+Pvalue.csv", row.names = FALSE)
-#---------#
-
-#Interaction Model for the poster in CHARGE conference
-map(vcfReg_TSHmod[leadingSNPs], getCoefs)
-do.call(rbind, map(vcfReg_TSHmod[targets[1:3]], getCoefs))
-
-#significant interactions
-resModel3 %>%
-  cbind(.,repSNPs[c("SNPid", "Locus")]) %>% 
-  filter(Pvalue < 0.05)
-# ggplot(aes(Pvalue)) +
-# geom_histogram(fill = "steelblue3", color = "grey70", bins = 50) +
-# theme_classic()
-
-ggsave("26-Apr-22_SNP-Hypothyroid interaction.png", width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
-#---------#
-
-#Plotting and comparing Betas and Pvalues of interaction terms
-resModel3 %>% 
-  as.data.frame() %>% 
-  mutate(coef = rownames(resModel3)) %>% 
-  rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`) %>% 
-  mutate(SNPid = rep(repSNPs$SNPid, each = 5),
-         Locus = rep(repSNPs$Locus, each = 5)) %>% 
-  mutate(coef = replace(coef, coef == "TSH_catHyperT",     "HyperThyrodism"),
-         coef = replace(coef, coef == "TSH_catHypoT",      "HypoThyrodism"),
-         coef = replace(coef, coef == "SNP:TSH_catHyperT", "SNP_HyperThyrodism"),
-         coef = replace(coef, coef == "SNP:TSH_catHypoT",  "SNP_HypoThyrodism")) %>%
-  mutate(tagHyper = if_else(coef == "SNP_HyperThyrodism", "GAB2", ""),
-         tagHypo  = if_else(coef == "SNP_HypoThyrodism",  "GAB2      IGF1R, PIP5K1B", "")) %>% 
-  filter(coef %in% c("SNP_HyperThyrodism", "SNP_HypoThyrodism")) %>% 
-  #select(SNPid, Locus, coef, Pvalue, tag) %>% 
-  #filter(coef == "SNP_HypoThyrodism") %>% arrange(Pvalue) %>% View()
-  # rbind(data.frame("coef"   = rep("Uniform", 162),
-  #                  "Pvalue" = runif(162))) %>%
-  #select(SNPid, Locus,  `SNP:TSH_cat0_Pvalue`, `SNP:TSH_cat2_Pvalue`)
-  # rename(SNP_HyperThyrodism = `SNP:TSH_cat0_Pvalue`, 
-  #        SNP_HypoThyrodism  = `SNP:TSH_cat2_Pvalue`) %>% 
-  # pivot_longer(cols = -c(SNPid, Locus),
-  #              names_to  = "Interaction",
-  #              values_to = "Pvalue") %>% #View()
-  ggplot(aes(x = Pvalue)) +
-  geom_density(data = data.frame("rnd" = runif(100000)),
-               aes(x = rnd),
-               fill = "grey70",
-               color = "grey50")+
-  geom_density(aes(fill = coef),
-               alpha = 0.6,
-               color = "grey50") + #, show.legend = NULL
-  scale_fill_manual(values = c("violetred1", "turquoise2"),
-                    #name   = "SNP vs",
-                    labels = c("Hyperthyrodism",
-                               "Hypothyrodism")) + 
-  geom_vline(aes(xintercept = 0.05), lty = 2) +
-  geom_text(aes(label = tagHyper),
-            x = 0.14,
-            y = 7,
-            color = "violetred1",
-            size = 4,
-            fontface = 2) +
-  geom_text(aes(label = tagHypo),
-            x = 0.68,
-            y = 3,
-            color = "turquoise2",
-            size = 4,
-            fontface = 2) +
-  labs(title = "Density plot of the p-values for interaction of SNPs vs:",
-       x = "Pvalue for the interaction term") + 
-  facet_grid(coef ~ .) + #xlim(0, 0.0025) + scale_fill_discrete() +
-  theme_classic() +
-  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
-        legend.title = element_blank(), #"",
-        legend.position = "top", #"none", "bottom"
-        axis.text.y  = element_text(size = 10, face = "bold"),
-        axis.text.x  = element_text(size = 10, face = "bold"),
-        axis.title   = element_text(size = 12, face = "bold"),
-        legend.key.size = unit(0.6, 'cm'),
-        legend.text  = element_text(size = 10, face = "bold"),
-        strip.text = element_blank()
+# Visualizing SNP-TSH interaction
+lapply(c("chr8:23885208",
+         "chr8:23894869"), function(SNP)
+  {
+   vcfReg_TSHmod %>%
+             select(eGFRw.log, SNP, TSH, Age, Sex, starts_with("PC")) %>% #starts_with("chr8:")
+             #filter(!is.na(TSH_cat)) %>%
+             mutate(#TSH_cen = scale(TSH, scale = F),
+                    TSH_third = case_when(TSH < quantile(TSH, 1/3, na.rm = T) ~ "Hyperthyrodism",
+                                          TSH > quantile(TSH, 2/3, na.rm = T) ~ "Hypothyrodism",
+                                          TRUE ~ "Normal TSH")) %>% 
+            mutate(across(c(Age, starts_with("PC")), ~ scale(., scale = F))) %>%
+            ggplot(aes(x = !!sym(SNP), y = eGFRw.log, color = TSH_third)) +
+            geom_smooth(method = "lm", se = T) + 
+             #facet_wrap(~TSH_cat, nrow = 3) +
+             scale_color_manual(name = "Stratified TSH",
+               values = c("steelblue3", "green4", "turquoise2"),
+               breaks = c("Hyperthyrodism", "Normal TSH", "Hypothyrodism")) +
+             labs(x = paste("Dosage of", SNP, "variant at STC1"),
+                  y = "log(eGFRcreat)") +
+             theme_classic()
+           
+           
+   # Save the plot
+   ggsave(paste0("15-Feb-23_SNP-TSH interaction effect on eGFRw.log for ", str_replace(SNP, ":", "_"), " at STC1.png"),
+          last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")      
+   }
   )
 
-ggsave("07-Jun-222_SNP-Hyperthyroid_vs_SNP-Hypothyroid_interactions_Pvalues_ESHG_poster.png", width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
-#P-values of the model0 to model2
-#resModelB_p <- Messy2Tidy2(interTSHpvalu)
-#resModelN_p <- getPvals2table(vcfReg_TSHmod[c(21:31, 34:71, 19 ,72:102)], vcfReg_TSHmod[targets])
+#geom_point()+
+#geom_violin()+
+#geom_boxplot(aes(fill = TSH_cat), color = "grey", width = .01, position = position_dodge(2)) +
+
 
 #---------#
-#merging two summary results: Outlier Betas & Sig Pvalues
-#results of phase 1 and 3
-resAllModels <- data.frame("SNPid" = targets,
-                           "ModelB.Beta"   = resModelB$Beta,
-                           "ModelB.SE"     = resModelB$SE,
-                           "ModelB.Pvalue" = resModelB$Pvalue,
-                           "Model0.Beta"   = resModel0$Beta,
-                           "Model0.SE"     = resModel0$SE,
-                           "Model0.Pvalue" = resModel0$Pvalue,
-                           "Model1.Beta"   = resModel1$Beta,
-                           "Model1.SE"     = resModel1$SE,
-                           "Model1.Pvalue" = resModel1$Pvalue,
-                           "Model2.Beta"   = resModel2$Beta,
-                           "Model2.SE"     = resModel2$SE,
-                           "Model2.Pvalue" = resModel2$Pvalue) %>%
-  inner_join(repSNPs[c("SNPid",
-                       "Locus",
-                       "BETA", 
-                       "SEBETA",
-                       "PVALUE")],
-             #"Effect.CHRIS",
-             #"Effect.ckdgen",
-             #"CHRIS.CKDGen.Effect.Ratio")], 
-             by = "SNPid") %>%
-  right_join(resModelN,   by = "SNPid") %>%
-  #right_join(resModelN_p, by = "SNPid", suffix = c("_beta", "_p")) %>%
-  rename(GWAS.Beta = BETA, GWAS.SE = SEBETA, GWAS.Pvalue = PVALUE)
+library(interactions)
+library(jtools)
 #---------#
-#write_tsv(resAllModels, "07-Feb-2022_resAllModels_Coefs+Pvalues.tsv")
 
-#---------#
-#Plots
-ggplot(resAllModels, aes(y = (SNP_Model0 - T3_beta)))+
-  geom_boxplot(alpha = 0.6, fill = "Orange", outlier.color = "red")
-#geom_text(aes(label = Locus, color = Locus), size = 3, vjust = -1)
+# Emerging SNP-TSH interaction via package `chr8:23885208`
+interact_plot(
+  lm(paste0("eGFRw.log ~ `chr8:23894869` * TSH + Sex + Age +", PCs), vcfReg_TSHmod),
+  pred = `chr8:23894869`,
+  modx = TSH,
+  interval = T,
+  linearity.check = F,
+  plot.points = F,
+  colors = "seagreen",
+  #legend.main = "Custom Legend Title",
+  #x.label = "Custom X Label",
+  y.label = "log(eGFRcreat)") +
+    jtools::theme_nice()
 
-#scatter
-ggplot(resAllModels, aes(x = TSH_beta , y = TSH.q_beta))+
-  geom_point(aes(shape = Locus, color = Locus), size = 2) +
-  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) +
-  geom_abline(slope = 1, intercept = 0, color="gray", linetype="dashed", size = 1.1) + theme_classic()
-#geom_text(aes(label = Locus, color = Locus), size = 2, vjust = -1)
-
-ggplot(resAllModels, aes(x = (SNP_Model0 - T3_beta) , y = (Effect.ckdgen)))+
-  geom_point(aes(shape = Locus, color = Locus), size = 2) +
-  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) + theme_classic()
-#geom_abline(slope = 1, intercept = 0, color="gray", linetype="dashed", size = 1.1) + 
-
-ggsave("SNP_Model0-T3_beta) vs. (Effect.ckdgen).png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
-
-
-#-----------------------------------------------------#
-#-----------------------------------------------------#
-#-----------------------------------------------------#
-
-interTSHbetas <- map_df(vcfReg_TSHmod[targets],
-                        function(SNP){ 
-                          m <- lm(eGFRw.log.Res ~ SNP * TSH_cat + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data = vcfReg_TSHmod) #+ Municipality
-                          s <- coef(m)
-                          return(s[-1])
-                        })
-#-----------------------------------------------------#
-interTSHpvalu <- map(vcfReg_TSHmod[targets],
-                     function(SNP){
-                       m <- lm(eGFRw.log.Res ~ SNP * TSH_cat + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data = vcfReg_TSHmod)#+ Municipality
-                       s <- summary(m)$coefficients
-                       p <- as.data.frame(summary(m)$coefficients[,4])
-                       interVar <<- rownames(p)
-                       rownames(p) <- 1:nrow(p)
-                       colnames(p) <- "Pvalue"
-                       return(p)
-                     })
-#-----------------------------------------------------#
-Messy2Tidy2 <- function(df){
-  n   <- length(df)
-  dft <- lapply(1:n, function(i) t(df[[i]]))
-  dff <- as.data.frame(do.call(rbind, dft))
-  colnames(dff) <- interVar
-  rownames(dff) <- 1:n
-  p <- 2:ncol(dff) #Dropping Intercept column
-  out <- cbind(SNPid = targets[1:n], dff[,p])
-  return(out)
-}
-#-----------------------------------------------------#
-#Saving the outputs of mediation analysis
-
-#medAnaRes1: lm(y ~(TSH_cat * SNP),         data = vcfReg_TSHmod)
-#medAnaRes2: lm(y ~(SNP * TSH_cat) + TSH.q, data = vcfReg_TSHmod)
-#medAnaRes3: lm(y ~ SNP + TSH.q,            data = vcfReg_TSHmod)
-
-medAnaRes2 <- interTSHbetas %>% 
-  mutate(SNPid = targets, .before = 1) %>%
-  inner_join(Messy2Tidy2(interTSHpvalu), by = "SNPid", suffix = c(".Beta", ".Pvalue"))%>%
-  inner_join(repSNPs[c("SNPid", "Locus","BETA", "PVALUE")], by = "SNPid", suffix = c("", "GWAS")) %>% 
-  relocate(c(Locus), .after = SNPid) #%>% #head()
-#write.csv(., "medAnaRes1.csv", row.names = FALSE, quote = FALSE)
-
-medAna_Merged <- merge(medAnaRes2[c("SNPid", "Locus", "BETA", "PVALUE", "SNP.Beta", "SNP.Pvalue")],
-                       medAnaRes3[c("SNPid", "Locus", "SNP.Beta", "SNP.Pvalue")], 
-                       by = c("SNPid", "Locus"), 
-                       suffix = c("2", "5"))
-
-write.csv(medAna_Merged, "InteractionTSH(Beta+Pvalue)_TSH_cat_25Jan.csv", row.names = FALSE, quote = FALSE)
-
-#-----------------------------------------------------#
-library(pheatmap)
-pdf('pheatmap_MediationAnalysis_TSH_cat_25Jan.pdf', width=18, height = 18)
-#Betas
-pheatmap(medAna_Merged[c("BETA", "SNP.Beta2", "SNP.Beta5")] / medAna_Merged$BETA,
-         cluster_cols = FALSE, cluster_rows = FALSE, 
-         show_rownames = T, labels_row = medAna_Merged$SNPid, 
-         border_color = 'Black', fontsize_row = 6, fontsize_col = 12, angle_col = "0")
-#P-values
-pheatmap(medAna_Merged[c("PVALUE", "SNP.Pvalue2", "SNP.Pvalue5")],
-         cluster_cols = FALSE, cluster_rows = FALSE, 
-         show_rownames = T, labels_row = medAna_Merged$SNPid, 
-         border_color = 'Black', fontsize_row = 6, fontsize_col = 12, angle_col = "0")
-
-#-----------------------------------------------------#
-#Scatter plots of Betas
-p11 <- medAna_Merged %>% 
-  ggplot(aes(BETA, SNP.Beta2)) + 
-  geom_point(aes(shape = Locus, color = Locus), size = 2) +
-  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) + 
-  geom_abline(slope = 1, intercept = 0, color="gray") + theme_classic()
-
-p12 <- medAna_Merged %>% 
-  ggplot(aes(BETA, SNP.Beta5)) + 
-  geom_point(aes(shape = Locus, color = Locus), size = 2) +
-  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) + 
-  geom_abline(slope = 1, intercept = 0, color="gray") + theme_classic()
-
-library(gridExtra)
-p13 <- grid.arrange(p11, p12, ncol = 1)
-
-dev.off()
-
+ggsave("15-Feb-23_SNP-TSH interactions chr8_23894869 at STC1.png",
+       width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
 
 
@@ -790,5 +623,125 @@ Mag_Step2 %>%
 ggsave("13-Sep-22_Mediatory effect of eGFR on association of SNPs with Magnesium.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
 
+
 #-----------------------------------------------------#
+#---------------------- Other ------------------------
+#-----------------------------------------------------#
+
+# retrieve & save a printed but unsaved console output history by: .Last.value
+View(.Last.value)  
+history(max.show = Inf) # full history
+#---------#
+
+#Plotting and comparing Betas and Pvalues of interaction terms
+resModel3 %>% 
+  as.data.frame() %>% 
+  mutate(coef = rownames(resModel3)) %>% 
+  rename(Beta = Estimate, SE = `Std. Error`, Pvalue = `Pr(>|t|)`) %>% 
+  mutate(SNPid = rep(repSNPs$SNPid, each = 5),
+         Locus = rep(repSNPs$Locus, each = 5)) %>% 
+  mutate(coef = replace(coef, coef == "TSH_catHyperT",     "HyperThyrodism"),
+         coef = replace(coef, coef == "TSH_catHypoT",      "HypoThyrodism"),
+         coef = replace(coef, coef == "SNP:TSH_catHyperT", "SNP_HyperThyrodism"),
+         coef = replace(coef, coef == "SNP:TSH_catHypoT",  "SNP_HypoThyrodism")) %>%
+  mutate(tagHyper = if_else(coef == "SNP_HyperThyrodism", "GAB2", ""),
+         tagHypo  = if_else(coef == "SNP_HypoThyrodism",  "GAB2      IGF1R, PIP5K1B", "")) %>% 
+  filter(coef %in% c("SNP_HyperThyrodism", "SNP_HypoThyrodism")) %>% 
+  ggplot(aes(x = Pvalue)) +
+  geom_density(data = data.frame("rnd" = runif(100000)),
+               aes(x = rnd),
+               fill = "grey70",
+               color = "grey50")+
+  geom_density(aes(fill = coef),
+               alpha = 0.6,
+               color = "grey50") + #, show.legend = NULL
+  scale_fill_manual(values = c("violetred1", "turquoise2"),
+                    #name   = "SNP vs",
+                    labels = c("Hyperthyrodism",
+                               "Hypothyrodism")) + 
+  geom_vline(aes(xintercept = 0.05), lty = 2) +
+  geom_text(aes(label = tagHyper),
+            x = 0.14,
+            y = 7,
+            color = "violetred1",
+            size = 4,
+            fontface = 2) +
+  geom_text(aes(label = tagHypo),
+            x = 0.68,
+            y = 3,
+            color = "turquoise2",
+            size = 4,
+            fontface = 2) +
+  labs(title = "Density plot of the p-values for interaction of SNPs vs:",
+       x = "Pvalue for the interaction term") + 
+  facet_grid(coef ~ .) + #xlim(0, 0.0025) + scale_fill_discrete() +
+  theme_classic() +
+  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+        legend.title = element_blank(), #"",
+        legend.position = "top", #"none", "bottom"
+        axis.text.y  = element_text(size = 10, face = "bold"),
+        axis.text.x  = element_text(size = 10, face = "bold"),
+        axis.title   = element_text(size = 12, face = "bold"),
+        legend.key.size = unit(0.6, 'cm'),
+        legend.text  = element_text(size = 10, face = "bold"),
+        strip.text = element_blank()
+  )
+
+ggsave("07-Jun-222_SNP-Hyperthyroid_vs_SNP-Hypothyroid_interactions_Pvalues_ESHG_poster.png", 
+       width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+#-----------------------------------------------------#
+
+#Plots
+ggplot(resAllModels, aes(y = (SNP_Model0 - T3_beta)))+
+  geom_boxplot(alpha = 0.6, fill = "Orange", outlier.color = "red")
+#geom_text(aes(label = Locus, color = Locus), size = 3, vjust = -1)
+
+#scatter
+ggplot(resAllModels, aes(x = TSH_beta , y = TSH.q_beta))+
+  geom_point(aes(shape = Locus, color = Locus), size = 2) +
+  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) +
+  geom_abline(slope = 1, intercept = 0, color="gray", linetype="dashed", size = 1.1) +
+  theme_classic()
+#geom_text(aes(label = Locus, color = Locus), size = 2, vjust = -1)
+
+ggplot(resAllModels, aes(x = (SNP_Model0 - T3_beta) , y = (Effect.ckdgen)))+
+  geom_point(aes(shape = Locus, color = Locus), size = 2) +
+  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) + theme_classic()
+#geom_abline(slope = 1, intercept = 0, color="gray", linetype="dashed", size = 1.1) + 
+
+ggsave("SNP_Model0-T3_beta) vs. (Effect.ckdgen).png", 
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+#---------#
+
+library(pheatmap)
+pdf('pheatmap_MediationAnalysis_TSH_cat_25Jan.pdf', width=18, height = 18)
+#Betas
+pheatmap(medAna_Merged[c("BETA", "SNP.Beta2", "SNP.Beta5")] / medAna_Merged$BETA,
+         cluster_cols = FALSE, cluster_rows = FALSE, 
+         show_rownames = T, labels_row = medAna_Merged$SNPid, 
+         border_color = 'Black', fontsize_row = 6, fontsize_col = 12, angle_col = "0")
+#P-values
+pheatmap(medAna_Merged[c("PVALUE", "SNP.Pvalue2", "SNP.Pvalue5")],
+         cluster_cols = FALSE, cluster_rows = FALSE, 
+         show_rownames = T, labels_row = medAna_Merged$SNPid, 
+         border_color = 'Black', fontsize_row = 6, fontsize_col = 12, angle_col = "0")
+#---------#
+
+#Scatter plots of Betas
+p11 <- medAna_Merged %>% 
+  ggplot(aes(BETA, SNP.Beta2)) + 
+  geom_point(aes(shape = Locus, color = Locus), size = 2) +
+  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) + 
+  geom_abline(slope = 1, intercept = 0, color="gray") + theme_classic()
+
+p12 <- medAna_Merged %>% 
+  ggplot(aes(BETA, SNP.Beta5)) + 
+  geom_point(aes(shape = Locus, color = Locus), size = 2) +
+  scale_shape_manual(values = c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17)) + 
+  geom_abline(slope = 1, intercept = 0, color="gray") + theme_classic()
+
+library(gridExtra)
+p13 <- grid.arrange(p11, p12, ncol = 1)
+
+dev.off()
 #-----------------------------------------------------#
