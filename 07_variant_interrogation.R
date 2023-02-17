@@ -2,13 +2,17 @@
 # Interrogating replicated SNPs in databases
 #=============================================#
 
+
+library(MendelianRandomization)
+library(gwasrapidd)
+
 #-----------------------------------------------------#
 #---------------- Mendelian Randomization ------------
 #-----------------------------------------------------#
-library(MendelianRandomization)
 
-#queries the PhenoScanner database of genotype-phenotype associations
-phenoscanner(snpquery="rs807624")$results %>% View()
+# To query the variants, we are using "MendelianRandomization" package.
+# results of PhenoScanner database for genotype-phenotype associations
+phenoscanner(snpquery = "rs807624")$results %>% View()
 
 #
 pheno_input(snps      = c("rs807624"),
@@ -36,13 +40,14 @@ mr_plot(ps_result, orientate=TRUE)
 mr_allmethods(ps_result, method="main")
 
 
+
 #-----------------------------------------------------#
 #-------------------- Phenoscanner -------------------
 #-----------------------------------------------------#
 
 # Looking up the 162 SNPs in the databases for finding 
 # an evidence of the association with other traits
-library(MendelianRandomization)
+# To query the variants, we are using "MendelianRandomization" package.
 #----------#
 
 # looking up 100 + 62 + PDILT replicated SNPs + Mediator SNPs
@@ -57,7 +62,8 @@ ps_object0$results %>%
   filter(
     str_detect(trait,
                regex("magnesium|Magnesium|PTT|aPTT|thromboplastin|Thromboplastin|coagulation|Coagulation"))) %>%
-  write.csv("25-Aug-2022_GenomeWideSig SNPs associated with Coagulation and Magnesium queried using phenoscanner.csv", row.names = FALSE, quote=FALSE)
+  write.csv("25-Aug-2022_GenomeWideSig SNPs associated with Coagulation and Magnesium queried using phenoscanner.csv",
+            row.names = FALSE, quote=FALSE)
 
 #----------#
 # Frequency of SNPs with outlier trait-adjusted effect on kidney
@@ -85,7 +91,9 @@ results_step3_long_pscanner <-
   #arrange(desc(n)) %>% View()
   count(trait, name = "N_of_gw_snp", sort = T) %>% View
   #filter(n>10) %>%
-  write.csv("31-Jan-23_163 SNPs queried using phenoscanner at genome-wide sig associated with trait_Frequency.csv", row.names = FALSE, quote=FALSE)
+  write.csv("31-Jan-23_163 SNPs queried using phenoscanner at genome-wide sig associated with trait_Frequency.csv", 
+            row.names = FALSE, quote=FALSE)
+  
   ggplot(aes(x = trait, y = n)) +
   geom_bar(stat = "identity",
            position = position_dodge(),
@@ -106,7 +114,8 @@ results_step3_long_pscanner <-
   #y = "Number of SNPs whom traits led to a nonsignificant effect size for Dosage",
   coord_flip()
 
-ggsave("23-Jun-22_Frequency of the traits found in Phenoscanner at GWS level.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("23-Jun-22_Frequency of the traits found in Phenoscanner at GWS level.png", 
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
 
 
@@ -188,8 +197,8 @@ thyroidomics_TSH      <- thyroidomics_TSH %>% mutate_at("MarkerName", str_replac
 thyroidomics_FT4      <- thyroidomics_FT4 %>% mutate_at("MarkerName", str_replace_all, ":SNP", "")
 thyroidomics_HyperTyd <- thyroidomics_HyperTyd %>% mutate_at("MarkerName", str_replace_all, ":SNP", "")
 thyroidomics_HypoTyd  <- thyroidomics_HypoTyd  %>% mutate_at("MarkerName", str_replace_all, ":SNP", "")
-
 #----------#
+
 repSNPs %>%
   mutate(SNPid_37 = str_c(Chr37, ':', Pos_b37)) %>% 
   inner_join(thyroidomics_FT4,
@@ -211,7 +220,7 @@ repSNPs %>%
 #-----------------------------------------------------#
 
 results_step3_long_pscanner %>%
-select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
+  select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
   rename(SNPid = hg38_coordinates) %>%
   #filter(trait == "Creatinine levels" | trait == "Creatinine" | trait == "Serum creatinine")
   #filter(trait == "Serum urate")
@@ -225,19 +234,17 @@ select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
   filter(
     str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"),
     !if_all(c(beta, se), is.na)
-  ) %>%
+  ) %>% #View
   # Joining the results of OpenTrgets look-up
   #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
   # Joining the results of step 3
   full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
                                           "Locus" = "Locus",
                                           "pheno" = "trait")) %>%
-  filter(
-    #Locus == "SLC34A1",
-    !is.na(as.numeric(p)),
-    #!if_any(c(p, pval), is.na)
-    ) %>% 
-  View
+  filter(!is.na(as.numeric(p)),
+         #Locus == "SLC34A1",
+         #!if_any(c(p, pval), is.na)
+         ) %>% View
 
 
 
@@ -245,17 +252,206 @@ select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
 #------------- GWAScatalog + phenoscanner ------------
 #-----------------------------------------------------#
 
+# To query the variants in GWAS catalog database,
+# we are using the "gwasrapidd" package.
+
+# Fetch the studies
+my_studies  <- get_studies(efo_trait = 'autoimmune disease')
+
+# You could have also used get_associations(efo_trait = 'autoimmune disease')
+my_associations <- get_associations(study_id = my_studies@studies$study_id)
+
+# Get association ids for which pvalue is less than 1e-6.
+# Extract column association_id
+association_ids <-
+  gwasCatalog@associations %>% 
+  filter(pvalue < 5e-8) %>% # Filter by p-value
+  drop_na(pvalue) %>%
+  pull(association_id)
+
+# Extract associations by association id
+my_associations2 <- my_associations[association_ids]
+
+gwasrapidd::n(my_associations2)
+
+
+gwasCatalog <- get_studies(variant_id = repSNPs[repSNPs$Locus == "SLC34A1", "RSID"])
+
+# Filtering the studies by traits
+gCat <- 
+  gwasCatalog@studies %>% 
+  filter(reported_trait %in% c("Creatinine levels", "Serum creatinine levels"))
+
+gCat_Results <- get_associations(study_id = gCat$study_id) #%>% View   gwasCatalog@studies$study_id
+
+
+
+# Subset the output
+# Risk allele info
+# Beta, SE, Pvalue
+# Store association_id
+gCat_id <-
+  gCat_Results@genes %>%
+  select(association_id, gene_name) %>%
+  full_join(gCat_Results@risk_alleles %>%
+              select(association_id, 
+                     variant_id, 
+                     risk_allele, 
+                     genome_wide), by = "association_id" ) %>% 
+  full_join(gCat_Results@associations %>%
+              select(association_id,
+                     beta_number, 
+                     standard_error, 
+                     pvalue),      by = "association_id") %>% 
+  filter(variant_id == repSNPs[repSNPs$Locus == "SLC34A1", "RSID"]) %>% 
+  pull(association_id)
+  #Map an association accession identifier to an EFO trait id.
+
+association_to_trait(gCat_id, verbose = FALSE, warnings = TRUE)
+association_to_variant(gCat_id, verbose = FALSE, warnings = TRUE)
+
+#----------#
+
 
 results_step3_long_pscanner %>% colnames()
 
 opentargets %>% 
   filter(str_detect(traitReported, "serum"))
+#----------#
 
 
+library(httr)
+library(jsonlite)
+
+# Define your list of variants of interest
+variants <- c("rs3812036", "rs41274482")
+#variants <- c("rs123456", "rs789012", "rs345678")
+
+# Define the base URL for the GWAS catalog API
+base_url <- "https://www.ebi.ac.uk/gwas/summary-statistics/api"
+
+# Loop through each variant and query the GWAS catalog API
+for (i in 1:length(variants)) {
+  
+  # Define the API endpoint for the variant
+  endpoint <- paste0(base_url, "/single-variant/", variants[i])
+  
+  # Query the API and parse the JSON response
+  response <- GET(endpoint)
+  if (status_code(response) == 200) {
+    result <- fromJSON(content(response, "text"), simplifyDataFrame = TRUE)
+    if (result$total > 0) {
+      print(paste0("Variant: ", variants[i]))
+      print(paste0("Traits: ", paste(result$data$trait, collapse = ", ")))
+    } else {
+      print(paste0("No associated traits found for variant ", variants[i]))
+    }
+  } else {
+    print(paste0("Error: Unable to retrieve data for variant ", variants[i]))
+  }
+  
+  # Pause for a few seconds to avoid overloading the API
+  Sys.sleep(3)
+}
+#----------#
 
 
+library(gwasrapidd)
 
 
+# Loop through each variant and query the GWAS catalog
+for (i in 1:length(variants)) {
+  results <- gwasrapidd::query_snp(snp_id = variants[i])
+  
+  # Check if any associations were found
+  if (nrow(results$data) > 0) {
+    print(paste0("Variant: ", variants[i]))
+    print(paste0("Traits: ", paste(results$data$trait, collapse = ", ")))
+  } else {
+    print(paste0("No associated traits found for variant ", variants[i]))
+  }
+  
+  # Pause for a few seconds to avoid overloading the API
+  Sys.sleep(3)
+}
+#----------#
 
+library(gwasrapidd)
 
+# Loop through each variant and query the GWAS catalog
+for (i in 1:length(variants)) {
+  results <- gwasrapidd::find_associations(snp_id = variants[i])
+  
+  # Check if any associations were found
+  if (nrow(results$data) > 0) {
+    print(paste0("Variant: ", variants[i]))
+    print(paste0("Traits: ", paste(results$data$trait, collapse = ", ")))
+  } else {
+    print(paste0("No associated traits found for variant ", variants[i]))
+  }
+  
+  # Pause for a few seconds to avoid overloading the API
+  Sys.sleep(3)
+}
+#----------#
+
+library(httr)
+
+# Loop through each variant and query the GWAS catalog
+for (i in 1:length(variants)) {
+  url <- paste0("https://www.ebi.ac.uk/gwas/summary-statistics-api/variant/", variants[i], "/associations")
+  response <- httr::GET(url)
+  
+  # Check if the request was successful
+  if (httr::status_code(response) == 200) {
+    data <- httr::content(response, "text", encoding = "UTF-8")
+    data <- jsonlite::fromJSON(data)$data
+    
+    # Check if any associations were found
+    if (length(data) > 0) {
+      print(paste0("Variant: ", variants[i]))
+      print(paste0("Traits: ", paste(data$trait, collapse = ", ")))
+    } else {
+      print(paste0("No associated traits found for variant ", variants[i]))
+    }
+  } else {
+    print(paste0("Error: Unable to retrieve data for variant ", variants[i]))
+  }
+  
+  # Pause for a few seconds to avoid overloading the API
+  Sys.sleep(3)
+  
+  return(data)
+}
+#----------#
+
+ # Python script
+import requests
+import json
+import time
+
+# Define your list of variants of interest
+variants = ["rs123456", "rs789012", "rs345678"]
+
+# Loop through each variant and query the GWAS catalog
+for variant in variants:
+  url = "https://www.ebi.ac.uk/gwas/summary-statistics-api/variant/" + variant + "/associations"
+response = requests.get(url)
+
+# Check if the request was successful
+if response.status_code == 200:
+  data = json.loads(response.text)["data"]
+
+# Check if any associations were found
+if len(data) > 0:
+  print("Variant:", variant)
+print("Traits:", ", ".join([d["trait"] for d in data]))
+else:
+  print("No associated traits found for variant", variant)
+else:
+  print("Error: Unable to retrieve data for variant", variant)
+
+# Pause for a few seconds to avoid overloading the API
+time.sleep(3)
+#----------#
  
