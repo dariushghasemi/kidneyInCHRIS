@@ -86,6 +86,7 @@ lm(eGFRw.log ~ SNP * TSH_cat + PC1 + ... + PC10)
 
 - Here we tried to depict the interaction of the dosage with TSH levels for the two variants with significant interaction effect (15-Feb-23).
 
+- Interaction plots for the two variants have been drawn by the interactions package in R, trying to clearly showing the interaction of eGFR-variants with TSH levels by enabling to adjust inside the linear model for age, sex, nad PCs (20-Feb-23).
 
 
 
@@ -126,7 +127,7 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Here we are taking the advantage of the GWAS Catalog API to automatically query the SNPs to find the corresponding associated traits (14-Feb-2023).
 
-
+- The summary results of interrogation in GWAS catalog have been obtained and merged with phenoscanner look-up summary results (19-Feb-23).
 
 
 

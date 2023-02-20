@@ -219,11 +219,11 @@ repSNPs %>%
 #---------------- step 3 + phenoscanner --------------
 #-----------------------------------------------------#
 
-results_step3_long_pscanner %>%
+# phenoscanner ready to join with step 3
+pscanner <-
+  results_step3_long_pscanner %>%
   select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
   rename(SNPid = hg38_coordinates) %>%
-  #filter(trait == "Creatinine levels" | trait == "Creatinine" | trait == "Serum creatinine")
-  #filter(trait == "Serum urate")
   mutate(
     trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
     trait = str_replace(trait, "Serum urate",                                   "Urate"),
@@ -232,9 +232,8 @@ results_step3_long_pscanner %>%
     trait = str_replace(trait, "Diastolic blood pressure",                      "DBP")
   ) %>%
   filter(
-    str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"),
-    !if_all(c(beta, se), is.na)
-  ) %>% #View
+    str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"))#,
+    #!if_all(c(beta, se), is.na) %>% #View
   # Joining the results of OpenTrgets look-up
   #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
   # Joining the results of step 3
@@ -355,32 +354,13 @@ for (i in 1:length(variants)) {
 }
 #----------#
 
-
-library(gwasrapidd)
-
-
-# Loop through each variant and query the GWAS catalog
-for (i in 1:length(variants)) {
-  results <- gwasrapidd::query_snp(snp_id = variants[i])
-  
-  # Check if any associations were found
-  if (nrow(results$data) > 0) {
-    print(paste0("Variant: ", variants[i]))
-    print(paste0("Traits: ", paste(results$data$trait, collapse = ", ")))
-  } else {
-    print(paste0("No associated traits found for variant ", variants[i]))
-  }
-  
-  # Pause for a few seconds to avoid overloading the API
-  Sys.sleep(3)
-}
 #----------#
 
 library(gwasrapidd)
 
 # Loop through each variant and query the GWAS catalog
 for (i in 1:length(variants)) {
-  results <- gwasrapidd::find_associations(snp_id = variants[i])
+  results <- gwasrapidd::get_associations(variant_id = variants[i])
   
   # Check if any associations were found
   if (nrow(results$data) > 0) {
@@ -425,33 +405,49 @@ for (i in 1:length(variants)) {
 }
 #----------#
 
- # Python script
-import requests
-import json
-import time
 
-# Define your list of variants of interest
-variants = ["rs123456", "rs789012", "rs345678"]
 
-# Loop through each variant and query the GWAS catalog
-for variant in variants:
-  url = "https://www.ebi.ac.uk/gwas/summary-statistics-api/variant/" + variant + "/associations"
-response = requests.get(url)
 
-# Check if the request was successful
-if response.status_code == 200:
-  data = json.loads(response.text)["data"]
+#-----------------------------------------------------#
+#------------- GWAScatalog + phenoscanner ------------
+#-----------------------------------------------------#
 
-# Check if any associations were found
-if len(data) > 0:
-  print("Variant:", variant)
-print("Traits:", ", ".join([d["trait"] for d in data]))
-else:
-  print("No associated traits found for variant", variant)
-else:
-  print("Error: Unable to retrieve data for variant", variant)
+gwas_cat <- read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\GWAScatalog\\18-Feb-23_summary_results_all.csv", sep = "\t")
 
-# Pause for a few seconds to avoid overloading the API
-time.sleep(3)
-#----------#
+gwas_cat %>%
+  filter(Pvalue <= 5e-8) %>%
+  rename(trait = Trait,
+         beta = Beta,
+         se = Stderr) %>% 
+  mutate(
+    trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
+    trait = str_replace(trait, "Serum urate",                                   "Urate"),
+    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium",    "Magnesium"),
+    trait = str_replace(trait, "Activated partial thromboplastin time",         "APTT"),
+    trait = str_replace(trait, "Diastolic blood pressure",                      "DBP")
+  ) %>%
+  filter(str_detect(trait, "SCr|Urate|Magnesium|APTT|DBP")) %>%
+  right_join(repSNPs %>% select(SNPid, Locus, RSID),
+             ., by = c("RSID" = "variant"),
+            suffix = c("_CHRIS", "_GC")) %>%
+  rename(Locus = Locus_CHRIS) %>%
+  right_join(pscanner, 
+             by = c("SNPid", "Locus", "trait"),
+             suffix = c("_GC", "_PS")) %>%
+  mutate(across(c(beta_PS, se_PS), as.numeric)) %>%
+  # Remove duplicates on selected columns
+  #distinct(SNPid, beta_PS, se_PS, .keep_all = T) %>%
+  mutate(missing = case_when(
+    Locus == "IGF1R"  & if_all(c(beta_PS, se_PS), is.na) ~ 1,
+    Locus == "SHROOM3" & if_all(c(beta_PS, se_PS), is.na) & pmid == "20700443" ~ 1,
+                             TRUE ~ 0)) %>%
+  filter(missing != 1) %>%
+  select(-missing) %>%
+  write.csv(., "18-Feb-23_Summary of interrogation in GWAS catalog merged with Phenoscanner.csv", row.names = FALSE)
+  
+  # full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
+  #                                         "Locus" = "Locus",
+  #                                         "pheno" = "trait"))
+  
+
  
