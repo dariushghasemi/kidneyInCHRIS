@@ -4,10 +4,10 @@ bin-release/
 [Oo]bj/
 [Bb]in/
 # Other files and folders
-.gz/
+*.gz/
 .Rproj.user
 .RData
 README.html
-.csv
-.png
+*.csv
+*.png
 .Rhistory
