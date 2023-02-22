@@ -248,7 +248,7 @@ pscanner <-
 
 
 #-----------------------------------------------------#
-#------------- GWAScatalog + phenoscanner ------------
+#------------- GWAScatalog (gwasrapidd) --------------
 #-----------------------------------------------------#
 
 # To query the variants in GWAS catalog database,
@@ -318,6 +318,9 @@ opentargets %>%
   filter(str_detect(traitReported, "serum"))
 #----------#
 
+#-----------------------------------------------------#
+#---------------- GWAScatalog Rest API ---------------
+#-----------------------------------------------------#
 
 library(httr)
 library(jsonlite)
@@ -412,21 +415,33 @@ for (i in 1:length(variants)) {
 #------------- GWAScatalog + phenoscanner ------------
 #-----------------------------------------------------#
 
-gwas_cat <- read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\GWAScatalog\\18-Feb-23_summary_results_all.csv", sep = "\t")
+# Summary results of SNPs look-up via GWAS Catalog REST API in python
+gwas_cat <- 
+  read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\GWAScatalog\\18-Feb-23_summary_results_all.csv", sep = "\t")
 
 gwas_cat %>%
-  filter(Pvalue <= 5e-8) %>%
   rename(trait = Trait,
          beta = Beta,
-         se = Stderr) %>% 
+         se = Stderr) %>%
+  filter(variant != "rs5020545", #For this variant, the result shows the mGWAS association
+         Pvalue <= 5e-8) %>% 
   mutate(
-    trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
-    trait = str_replace(trait, "Serum urate",                                   "Urate"),
-    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium",    "Magnesium"),
-    trait = str_replace(trait, "Activated partial thromboplastin time",         "APTT"),
-    trait = str_replace(trait, "Diastolic blood pressure",                      "DBP")
+    trait = str_replace(trait, "Serum creatinine levels$|Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
+    trait = str_replace(trait, "Urate levels$|Urea levels|Serum urate|Serum uric acid levels", "Urate"),
+    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium", "Magnesium"),
+    trait = str_replace(trait, "Activated partial thromboplastin time", "APTT"),
+    trait = str_replace(trait, "Diastolic blood pressure", "DBP"),
+    trait = str_replace(trait, "Systolic blood pressure",  "SBP"),
+    beta  = case_when(Locus == "SHROOM3" & Pubmed_ID == "20700443" ~ ???0.005,     TRUE ~ beta),
+    se    = case_when(Locus == "SHROOM3" & Pubmed_ID == "20700443" ~ 0.001,      TRUE ~ se),
+    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "20700443" ~ 6.27E-13,   TRUE ~ Pvalue),
+    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "34899825" & variant == "rs13146355" ~ 9.113E-142, TRUE ~ Pvalue),
+    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "36329257" & variant == "rs28817415" ~ 1.161E-23,  TRUE ~ Pvalue),
+    Pvalue= case_when(Locus == "STC1"    & Pubmed_ID == "36329257" & variant == "rs7042786"  ~ 2.417E-14,  TRUE ~ Pvalue),
+    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "27841878" & variant == "rs55940751" ~ 3.600E-8,   TRUE ~ Pvalue)
   ) %>%
-  filter(str_detect(trait, "SCr|Urate|Magnesium|APTT|DBP")) %>%
+  filter(str_detect(trait, "SCr|Urate|Magnesium|APTT|DBP|SBP")) %>% 
+  arrange(Pubmed_ID) %>% View
   right_join(repSNPs %>% select(SNPid, Locus, RSID),
              ., by = c("RSID" = "variant"),
             suffix = c("_CHRIS", "_GC")) %>%
