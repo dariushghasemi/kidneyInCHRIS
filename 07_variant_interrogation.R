@@ -79,7 +79,7 @@ results_step3_long_pscanner <-
   ps_object0$results %>%
   bind_rows(ps_object1$results) %>%
   bind_rows(ps_object3$results) %>%
-  merge(repSNPs[c("Locus","SNPid")], ., by.x = "SNPid", by.y = "snp", sort = F) %>%
+  merge(repSNPs[c("Locus","SNPid")], ., by.x = "SNPid", by.y = "snp", sort = F) %>% 
   mutate(p = as.numeric(p)) %>%
   rename(EA = a1, OA = a2) %>%
   select(-SNPid) %>%
@@ -116,8 +116,37 @@ results_step3_long_pscanner <-
 
 ggsave("23-Jun-22_Frequency of the traits found in Phenoscanner at GWS level.png", 
        last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+#----------#
 
-
+# Preparing Phenoscanner summary results for joining to step 3
+pscanner <-
+  results_step3_long_pscanner %>% 
+  #filter(pmid == "20383146") %>% 
+  #write.csv("23-Feb-23_pubmed_id 20383146.csv", row.names = FALSE, quote=FALSE)
+  select(Locus,  hg38_coordinates, rsid, EA, trait, beta, se, p, ancestry, pmid) %>%
+  rename(SNPid = hg38_coordinates) %>%
+  mutate(
+    across(c(beta, se), as.numeric),
+    trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
+    trait = str_replace(trait, "Serum urate",                                      "Urate"),
+    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium",       "Magnesium"),
+    trait = str_replace(trait, "Activated partial thromboplastin time",            "APTT"),
+    trait = str_replace(trait, "Diastolic blood pressure",                         "DBP"),
+    beta  = case_when(Locus == "SHROOM3" & p == 6.270e-13       & pmid == "20700443" ~ ???0.005,    TRUE ~ beta),
+    se    = case_when(Locus == "SHROOM3" & p == 6.270e-13       & pmid == "20700443" ~ 0.001,     TRUE ~ se),
+    beta  = case_when(Locus == "SLC34A1" & rsid == "rs3812036"  & pmid == "22703881" ~ -0.419985, TRUE ~ beta),
+    se    = case_when(Locus == "SLC34A1" & rsid == "rs3812036"  & pmid == "22703881" ~ 0.0481015, TRUE ~ se),
+    beta  = case_when(Locus == "SHROOM3" & rsid == "rs13146355" & pmid == "22797727" ~ 0.0047,    TRUE ~ beta),
+    se    = case_when(Locus == "SHROOM3" & rsid == "rs13146355" & pmid == "22797727" ~ 0.0007,    TRUE ~ se),
+    missing = case_when(Locus == "IGF1R"    & if_all(c(beta, se), is.na) ~ 1,
+                        pmid  == "19430482" & if_all(c(beta, se), is.na) ~ 1,
+                        pmid  == "20383146" & if_all(c(beta, se), is.na) ~ 1,
+                        pmid  == "20700443" & p == 6.000e-13 ~ 1,
+                        TRUE ~ 0)
+    ) %>%
+  filter(str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"),
+         missing != 1) %>%
+  select(-missing)
 
 #-----------------------------------------------------#
 #--------------------- OpenTargets -------------------
@@ -212,38 +241,6 @@ repSNPs %>%
          SEBETA, StdErr.Kidney, StdErr.Thyroid, 
          PVALUE, P.value.Kidney, P.value.Thyroid) %>% View()
   #write.csv(., "25-Aug-2022_Significant FT4-associated SNPs found by Thyroidomics at alpha05.csv", row.names = FALSE)
-
-
-
-#-----------------------------------------------------#
-#---------------- step 3 + phenoscanner --------------
-#-----------------------------------------------------#
-
-# phenoscanner ready to join with step 3
-pscanner <-
-  results_step3_long_pscanner %>%
-  select(Locus,  hg38_coordinates, trait, beta, se, p, pmid) %>%
-  rename(SNPid = hg38_coordinates) %>%
-  mutate(
-    trait = str_replace(trait, "Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
-    trait = str_replace(trait, "Serum urate",                                   "Urate"),
-    trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium",    "Magnesium"),
-    trait = str_replace(trait, "Activated partial thromboplastin time",         "APTT"),
-    trait = str_replace(trait, "Diastolic blood pressure",                      "DBP")
-  ) %>%
-  filter(
-    str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"))#,
-    #!if_all(c(beta, se), is.na) %>% #View
-  # Joining the results of OpenTrgets look-up
-  #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
-  # Joining the results of step 3
-  full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
-                                          "Locus" = "Locus",
-                                          "pheno" = "trait")) %>%
-  filter(!is.na(as.numeric(p)),
-         #Locus == "SLC34A1",
-         #!if_any(c(p, pval), is.na)
-         ) %>% View
 
 
 
@@ -410,7 +407,6 @@ for (i in 1:length(variants)) {
 
 
 
-
 #-----------------------------------------------------#
 #------------- GWAScatalog + phenoscanner ------------
 #-----------------------------------------------------#
@@ -440,15 +436,17 @@ gwas_cat %>%
     Pvalue= case_when(Locus == "STC1"    & Pubmed_ID == "36329257" & variant == "rs7042786"  ~ 2.417E-14,  TRUE ~ Pvalue),
     Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "27841878" & variant == "rs55940751" ~ 3.600E-8,   TRUE ~ Pvalue)
   ) %>%
-  filter(str_detect(trait, "SCr|Urate|Magnesium|APTT|DBP|SBP")) %>% 
-  arrange(Pubmed_ID) %>% View
+  filter(str_detect(trait, "Urate|Magnesium|APTT|DBP|SBP")) %>% #SCr|
+  arrange(Pubmed_ID) %>%
+  select(-c(Locus, Risk_AF)) %>%
   right_join(repSNPs %>% select(SNPid, Locus, RSID),
              ., by = c("RSID" = "variant"),
-            suffix = c("_CHRIS", "_GC")) %>%
-  rename(Locus = Locus_CHRIS) %>%
-  right_join(pscanner, 
-             by = c("SNPid", "Locus", "trait"),
-             suffix = c("_GC", "_PS")) %>%
+            suffix = c("_CHRIS", "_GC")) %>% #count(SNPid, trait)
+  #rename(Locus = Locus_CHRIS) %>% 
+  right_join(pscanner,
+             by = c("SNPid", "Locus"), #, "trait")
+             suffix = c("_GC", "_PS")) %>% 
+
   mutate(across(c(beta_PS, se_PS), as.numeric)) %>%
   # Remove duplicates on selected columns
   #distinct(SNPid, beta_PS, se_PS, .keep_all = T) %>%
@@ -458,11 +456,31 @@ gwas_cat %>%
                              TRUE ~ 0)) %>%
   filter(missing != 1) %>%
   select(-missing) %>%
-  write.csv(., "18-Feb-23_Summary of interrogation in GWAS catalog merged with Phenoscanner.csv", row.names = FALSE)
+  #write.csv(., "18-Feb-23_Summary of interrogation in GWAS catalog merged with Phenoscanner.csv", row.names = FALSE)
   
   # full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
   #                                         "Locus" = "Locus",
   #                                         "pheno" = "trait"))
+  
+  
+  
+#-----------------------------------------------------#
+#---------------- step 3 + phenoscanner --------------
+#-----------------------------------------------------#
+  
+# phenoscanner ready to join with step 3
+pscanner %>%
+  # Joining the results of OpenTrgets look-up
+  #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
+  # Joining the results of step 3
+  full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
+                                          "Locus" = "Locus",
+                                          "pheno" = "trait")) %>%
+  filter(!is.na(as.numeric(p)),
+         #Locus == "SLC34A1",
+         #!if_any(c(p, pval), is.na)
+  ) %>% View
+  
   
 
  
