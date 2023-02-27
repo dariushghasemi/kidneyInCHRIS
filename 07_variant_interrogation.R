@@ -121,7 +121,8 @@ ggsave("23-Jun-22_Frequency of the traits found in Phenoscanner at GWS level.png
 # Preparing Phenoscanner summary results for joining to step 3
 pscanner <-
   results_step3_long_pscanner %>% 
-  #filter(pmid == "20383146") %>% 
+  #filter(pmid == "20383146") %>%  
+  #count(trait)
   #write.csv("23-Feb-23_pubmed_id 20383146.csv", row.names = FALSE, quote=FALSE)
   select(Locus,  hg38_coordinates, rsid, EA, trait, beta, se, p, ancestry, pmid) %>%
   rename(SNPid = hg38_coordinates) %>%
@@ -142,11 +143,14 @@ pscanner <-
                         pmid  == "19430482" & if_all(c(beta, se), is.na) ~ 1,
                         pmid  == "20383146" & if_all(c(beta, se), is.na) ~ 1,
                         pmid  == "20700443" & p == 6.000e-13 ~ 1,
-                        TRUE ~ 0)
+                        TRUE ~ 0,),
+    dataset = "PS"
     ) %>%
   filter(str_detect(trait,"SCr|Urate|Magnesium|APTT|DBP"),
          missing != 1) %>%
   select(-missing)
+
+
 
 #-----------------------------------------------------#
 #--------------------- OpenTargets -------------------
@@ -412,75 +416,156 @@ for (i in 1:length(variants)) {
 #-----------------------------------------------------#
 
 # Summary results of SNPs look-up via GWAS Catalog REST API in python
-gwas_cat <- 
-  read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\GWAScatalog\\18-Feb-23_summary_results_all.csv", sep = "\t")
+gwas_cat0 <- read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\GWAScatalog\\18-Feb-23_Summary results of interrogation in GWAS catalog.csv", sep = "\t")
 
-gwas_cat %>%
-  rename(trait = Trait,
-         beta = Beta,
-         se = Stderr) %>%
-  filter(variant != "rs5020545", #For this variant, the result shows the mGWAS association
-         Pvalue <= 5e-8) %>% 
+# with ancestry info
+gwas_cat <- read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\GWAScatalog\\24-Feb-23_GWAS Catalog interrogation summary results.csv")
+#----------#
+
+# Pooling GC interrogation with PS varaints look-up
+gc_pscanner <-
+  gwas_cat %>%
+  rename(beta = Beta,
+         se = Stderr,
+         p = Pvalue,
+         trait = Trait,
+         EA = Risk_A,
+         rsid = variant,
+         ancestry = Ancestry,
+         pmid = Pubmed_ID) %>%
+  filter(rsid != "rs5020545", #For this variant, the result shows the mGWAS association
+         p <= 5e-8) %>% 
   mutate(
+    #across(c(beta, se), as.numeric),
     trait = str_replace(trait, "Serum creatinine levels$|Creatinine levels$|Serum creatinine$|Creatinine$", "SCr"),
     trait = str_replace(trait, "Urate levels$|Urea levels|Serum urate|Serum uric acid levels", "Urate"),
     trait = str_replace(trait, "Magnesium levels|Serum magnesium|Magnesium", "Magnesium"),
     trait = str_replace(trait, "Activated partial thromboplastin time", "APTT"),
     trait = str_replace(trait, "Diastolic blood pressure", "DBP"),
     trait = str_replace(trait, "Systolic blood pressure",  "SBP"),
-    beta  = case_when(Locus == "SHROOM3" & Pubmed_ID == "20700443" ~ ???0.005,     TRUE ~ beta),
-    se    = case_when(Locus == "SHROOM3" & Pubmed_ID == "20700443" ~ 0.001,      TRUE ~ se),
-    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "20700443" ~ 6.27E-13,   TRUE ~ Pvalue),
-    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "34899825" & variant == "rs13146355" ~ 9.113E-142, TRUE ~ Pvalue),
-    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "36329257" & variant == "rs28817415" ~ 1.161E-23,  TRUE ~ Pvalue),
-    Pvalue= case_when(Locus == "STC1"    & Pubmed_ID == "36329257" & variant == "rs7042786"  ~ 2.417E-14,  TRUE ~ Pvalue),
-    Pvalue= case_when(Locus == "SHROOM3" & Pubmed_ID == "27841878" & variant == "rs55940751" ~ 3.600E-8,   TRUE ~ Pvalue)
-  ) %>%
-  filter(str_detect(trait, "Urate|Magnesium|APTT|DBP|SBP")) %>% #SCr|
-  arrange(Pubmed_ID) %>%
+    beta  = case_when(Locus == "SHROOM3" & pmid == "20700443" ~ ???0.005,     TRUE ~ beta),
+    se    = case_when(Locus == "SHROOM3" & pmid == "20700443" ~ 0.001,      TRUE ~ se),
+    p     = case_when(Locus == "SHROOM3" & pmid == "20700443" ~ 6.27E-13,   TRUE ~ p),
+    p     = case_when(Locus == "SHROOM3" & pmid == "34899825" & rsid == "rs13146355" ~ 9.113E-142, TRUE ~ p),
+    p     = case_when(Locus == "SHROOM3" & pmid == "36329257" & rsid == "rs28817415" ~ 1.161E-23,  TRUE ~ p),
+    p     = case_when(Locus == "STC1"    & pmid == "36329257" & rsid == "rs7042786"  ~ 2.417E-14,  TRUE ~ p),
+    p     = case_when(Locus == "SHROOM3" & pmid == "27841878" & rsid == "rs55940751" ~ 3.600E-8,   TRUE ~ p),
+    # Aligning the effect allele and change the effect direction
+    EA    = case_when(Locus == "PDILT"   & pmid == "34594039" & rsid == "rs77924615" ~ "A", TRUE ~ EA),
+    beta  = case_when(Locus == "PDILT"   & pmid == "34594039" & rsid == "rs77924615" ~ -beta, TRUE ~ beta),
+    dataset = "GC"
+    ) %>%
+  filter(str_detect(trait, "SCr|Urate|Magnesium|APTT|DBP|SBP")) %>% 
   select(-c(Locus, Risk_AF)) %>%
-  right_join(repSNPs %>% select(SNPid, Locus, RSID),
-             ., by = c("RSID" = "variant"),
-            suffix = c("_CHRIS", "_GC")) %>% #count(SNPid, trait)
-  #rename(Locus = Locus_CHRIS) %>% 
-  right_join(pscanner,
-             by = c("SNPid", "Locus"), #, "trait")
-             suffix = c("_GC", "_PS")) %>% 
-
-  mutate(across(c(beta_PS, se_PS), as.numeric)) %>%
-  # Remove duplicates on selected columns
+  left_join(.,
+            repSNPs %>% select(Locus, RSID, SNPid),
+            by = c("rsid" = "RSID"),
+            suffix = c("_GC", "GWAS")) %>%
+  # Remove duplicates association for each trait by 
+  # taking the one with smallest p-value
   #distinct(SNPid, beta_PS, se_PS, .keep_all = T) %>%
-  mutate(missing = case_when(
-    Locus == "IGF1R"  & if_all(c(beta_PS, se_PS), is.na) ~ 1,
-    Locus == "SHROOM3" & if_all(c(beta_PS, se_PS), is.na) & pmid == "20700443" ~ 1,
-                             TRUE ~ 0)) %>%
+  add_count(SNPid, trait) %>%
+  mutate(missing = case_when(n > 1 & if_any(c(beta, se), is.na) ~ 1,
+                             # Remove duplicated variant in SHROOM3 
+                             # available also in pscanner
+                             Locus == "SHROOM3"   & p == 6.27E-13 ~ 1,
+                             rsid  == "rs3812036" ~ 1,
+                             TRUE ~ 0)
+         ) %>%
+  #count(SNPid, trait)
   filter(missing != 1) %>%
-  select(-missing) %>%
-  #write.csv(., "18-Feb-23_Summary of interrogation in GWAS catalog merged with Phenoscanner.csv", row.names = FALSE)
-  
-  # full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
-  #                                         "Locus" = "Locus",
-  #                                         "pheno" = "trait"))
-  
-  
+  group_by(SNPid, trait) %>%
+  slice_min(p, n = 1) %>%
+  #filter(Pvalue == min(Pvalue, na.rm = TRUE)) %>%
+  ungroup() %>%
+  # Checking if exclusion criteria correctly applied to associations -> 24 remained
+  #select(SNPid, n, Pvalue, trait) %>% count(SNPid, trait) 
+  select(Locus, SNPid, rsid, EA, trait, beta, se, p, ancestry, pmid, dataset) %>%
+  rbind(pscanner) %>%
+  filter(pmid != "UKBB", # duplicate associatons
+         pmid != "22797727")
+  #write.csv(., "26-Feb-23_GWAS Catalog interrogation summary results merged with Phenoscanner.csv", row.names = FALSE)
+#----------#
+
+# PheWeb-like scatter plot
+gc_pscanner %>%
+  ggplot(aes(Locus, y = -log10(p), color = trait, shape = trait)) +
+  geom_jitter(size = 2.5) + #show.legend = FALSE
+  ggrepel::geom_text_repel(aes(label = trait), size = 5, 
+                           color = "grey10", max.overlaps = 5) +
+  scale_shape_manual(values = c(19, 17, 18, 17, 19, 15, 17, 19, 17, 19, 15)) +
+  labs(x = "") +
+  #guides(color = guide_legend(), shape = "none") +
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
+        panel.grid.major.x = element_blank(),
+        axis.text  = element_text(size = 8,  face = "bold"),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.position =  c(.92, .7), #"none",
+        legend.key.size  = unit(0.99, 'cm'),
+        legend.key.width = unit(0.7, 'cm'),
+        legend.text  = element_text(size = 12),
+        legend.title = element_text(size = 14, face = "bold"))
+
+ggsave("26-Feb-23_GWAS Catalog merged with pscanner 1.png", 
+       last_plot(), width = 9, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+
+
   
 #-----------------------------------------------------#
 #---------------- step 3 + phenoscanner --------------
 #-----------------------------------------------------#
   
-# phenoscanner ready to join with step 3
-pscanner %>%
+# Gcatalog + phenoscanner ready to join with step 3
+gc_pscanner %>%
   # Joining the results of OpenTrgets look-up
   #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
   # Joining the results of step 3
   full_join(results_Step3_long, ., by = c("SNPid" = "SNPid",
                                           "Locus" = "Locus",
                                           "pheno" = "trait")) %>%
-  filter(!is.na(as.numeric(p)),
-         #Locus == "SLC34A1",
-         #!if_any(c(p, pval), is.na)
-  ) %>% View
-  
-  
+  filter(!is.na(as.numeric(p))) %>% View
+
+
+repSNPs %>% 
+  select(SNPid, Locus, RSID, EA_CHRIS_disc, RA_CHRIS_disc,                   #Step1
+         Beta_CHRIS, SE_CHRIS, Pvalue_CHRIS) %>% 
+  inner_join(results_Step2_long, by = c("SNPid", "Locus")) %>%               #Step2
+  inner_join(results_Step3_long, by = c("SNPid" = "SNPid",                   #Step3
+                                        "Locus" = "Locus",
+                                        "Trait" = "pheno"),
+             suffix = c("_Step2", "_Step3")) %>%
+  full_join(gc_pscanner, by = c("SNPid" = "SNPid",                           #interrogation
+                                "Locus" = "Locus",
+                                "Trait" = "trait",
+                                "RSID"  = "rsid")) %>%
+  filter(!is.na(p)) %>%
+  mutate(step3ab_EA = ifelse(EA_CHRIS_disc == EA, "concordant", "discor"),
+         beta_step3b_aligned = ifelse(EA_CHRIS_disc == EA, beta, -beta),
+         step3ab_effect_dir = ifelse(Estimate_Step3 * beta_step3b_aligned < 0 , "inconsis", "consistent")) %>%
+  write.csv(., "27-Feb-23_Step 3 mediation analysis merged with interrogation results.csv", row.names = FALSE)
+  select(Trait, SNPid, Locus, EA_CHRIS_disc, RA_CHRIS_disc, EA, step3ab_EA, Estimate_Step3, beta, beta_step3b_aligned, step3ab_effect_dir) %>% View
+  inner_join(results_Step4_long, by = c("SNPid" = "SNPid",                   #Step4
+                                        "Locus" = "Locus",
+                                        "Trait" = "pheno")) %>%
+  mutate(Mediator = ifelse(outlier == "Yes" & related == "Yes", "Yes", "No"),
+         Change_P = round((Beta_CHRIS - Estimate_Step2) / Beta_CHRIS * -100, 2),
+         EA_OA = paste0(EA_CHRIS_disc, "/", RA_CHRIS_disc)) %>% 
+  rename(Estimate_GWAS  = Beta_CHRIS,
+         SE_GWAS        = SE_CHRIS,
+         Pvalue_GWAS    = Pvalue_CHRIS,
+         Estimate_Step4 = Estimate,
+         SE_Step4       = SE,
+         Pvalue_Step4   = Pvalue) %>%
+  select(Locus, SNPid, RSID, EA_OA, ends_with("GWAS"), everything()) %>% #View()
+  filter(Mediator == "Yes",
+         Trait    != "SCr") %>% as_tibble() %>% View()
+
+
+
+
+
+
+
 
  

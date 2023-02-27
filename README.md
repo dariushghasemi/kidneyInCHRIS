@@ -129,7 +129,7 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - The summary results of interrogation in GWAS catalog have been obtained and merged with phenoscanner look-up summary results (19-Feb-23).
 
-
+- Then the joined interrogation summary results was merged with step 3 of the mediation analysis (27-Feb-23).
 
 
 
