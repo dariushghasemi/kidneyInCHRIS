@@ -8,6 +8,7 @@ bin-release/
 .Rproj.user
 .RData
 README.html
+*.xlsx
 *.csv
 *.png
 .Rhistory
