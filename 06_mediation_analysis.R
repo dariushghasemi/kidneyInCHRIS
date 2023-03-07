@@ -437,6 +437,12 @@ sum3steps_long <-
 
 write.csv(sum3steps_long, "11-Jan-23_SNP-wise summary of mediation analysis steps.csv", row.names = FALSE, quote = FALSE)
 
+
+
+
+
+
+
 #---------#
 #Saving model result containing Beta, SE, Pvalue, and outlier Yes/No
 results_Step2 <-

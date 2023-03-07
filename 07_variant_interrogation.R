@@ -501,10 +501,10 @@ gc_pscanner <-
   # merging with phenoscanner interrogation results
   rbind(pscanner) %>%
   filter(pmid != "22797727") %>%
-  rename(Estimate_Step3b = beta,
-         SE_Step3b     = se,
-         Pvalue_Step3b = p,
-         EA_Step3b     = EA) #%>%
+  rename(Estimate_step3b = beta,
+         SE_step3b     = se,
+         Pvalue_step3b = p,
+         EA_step3b     = EA) #%>%
   #write.csv(., "26-Feb-23_GWAS Catalog interrogation summary results merged with Phenoscanner.csv", row.names = FALSE)
 #----------#
 
@@ -548,10 +548,11 @@ gc_pscanner %>%
   filter(!is.na(as.numeric(p))) %>% View
 #----------#
 
-# Joining the results of interrogation in phenoscanner and 
+# Joining the results of interrogation in Phenoscanner and 
 # GWAS Catalog with mediation analysis steps
 
-repSNPs %>%
+sum3steps_long <-
+  repSNPs %>%
   # Step1 or GWAS
   select(SNPid, Locus, RSID, EA_CHRIS_disc, RA_CHRIS_disc,                   
          Beta_CHRIS, SE_CHRIS, Pvalue_CHRIS) %>%
@@ -560,9 +561,8 @@ repSNPs %>%
   # Joining with step3
   inner_join(results_Step3_long, by = c("SNPid" = "SNPid",
                                         "Locus" = "Locus",
-                                        "Trait" = "pheno"
-                                        ),
-             suffix = c("_Step2", "_Step3")) %>%
+                                        "Trait" = "pheno"),
+             suffix = c("_step2", "_step3")) %>%
   # Joining with interrogation results
   full_join(gc_pscanner, by = c("SNPid" = "SNPid",
                                 "Locus" = "Locus",
@@ -570,67 +570,89 @@ repSNPs %>%
                                 "RSID"  = "rsid")) %>%
   # Joining with OpenTrgets look-up
   #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
-  filter(!is.na(Pvalue_Step3b)) %>% 
-  mutate(EA_Step3ab              = ifelse(EA_CHRIS_disc == EA_Step3b, "concordant", "discor"),
-         Estimate_Step3b_aligned = ifelse(EA_CHRIS_disc == EA_Step3b, Estimate_Step3b, -Estimate_Step3b),
-         Assoc_dir_Step3ab       = ifelse(Estimate_Step3 * Estimate_Step3b_aligned < 0,
-                                      "inconsis", "consistent")) %>%
+  # Taking the common associated variants in step3 and interrogation 
+  #filter(!is.na(Pvalue_step3b)) %>%
+  mutate(EA_step3ab              = ifelse(EA_CHRIS_disc == EA_step3b, "concordant", "discor"),
+         Estimate_step3b_aligned = ifelse(EA_CHRIS_disc == EA_step3b, Estimate_step3b, -Estimate_step3b),
+         Assoc_dir_step3ab       = ifelse(Estimate_step3 * Estimate_step3b_aligned < 0,
+                                      "inconsis", "consistent"),
+         # compute the missing standard error based on beta ann p-value of the association
+         SE_estimated = abs(Estimate_step3b/ qnorm(Pvalue_step3b/2)), # tail = 2
+         # replace the missing standard error with the computed one: only for two SNPs
+         SE_step3b    = ifelse(is.na(SE_step3b), SE_estimated, SE_step3b),
+         # Check if the replacement is done correctly
+         SE_check     = ifelse(SE_step3b == SE_estimated, "Yes", " ")) %>%
+  # drop the interrogated association results for the variants without outlier effect in step 2
+  mutate_at(vars(SE_step3b, Pvalue_step3b, Estimate_step3b_aligned, pmid), ~replace(., outlier == "No", NA)) %>%
+  # rename related column
+  rename(associated_step3a = related) %>%
+  # rename the association effect column and replace it with the corrected one
+  mutate(Estimate_step3b = Estimate_step3b_aligned,
+         # correct the binary indicator for significant association in step 3a or step 3b
+         associated_step3b = ifelse(Pvalue_step3b < 5e-08, "Yes", NA)) %>%
+  select(-c(EA_step3b, EA_step3ab, ancestry, dataset, Estimate_step3b_aligned, Assoc_dir_step3ab, SE_estimated, SE_check)) %>%
   #write.csv(., "06-Mar-23_Step 3 mediation analysis merged with interrogation results.csv", row.names = FALSE)
-  # select(Trait, SNPid, Locus, EA_CHRIS_disc, EA_Step3b, EA_Step3ab, 
-  #        Estimate_Step3, Estimate_Step3b, Estimate_Step3b_aligned, Assoc_dir_Step3ab) %>% View
-  ggplot(aes(x = Estimate_Step3b_aligned, y = Estimate_Step3, color = Locus, shape = Locus)) +
-  geom_abline(slope = 1, lty = 2) +
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  geom_point(alpha = 0.9, size = 3.5) +
-  scale_shape_manual(values = c(19, 17, 18, 17, 19, 15, 17, 19, 17, 19, 15)) +
-  scale_color_manual(values = c(
-             "maroon1",
-             "darkorchid2",
-             "orange2", 
-             "green4", 
-             "steelblue2",
-             "darkturquoise",
-             "tomato",
-             "springgreen2",
-             "royalblue2",
-             "gold",
-             "grey50")) +
-  labs(x = "Effect size of variants association with traits found in databases",
-       y = "Effect size of variants association with traits found in CHRIS") +
-  theme(panel.background = element_rect(fill = "white"),
-        panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
-        panel.grid.major.x = element_line(linetype = 'solid', color = "grey80", size = .15),
-        axis.text  = element_text(size = 8,  face = "bold"),
-        axis.title = element_text(size = 12, face = "bold"),
-        #legend.position = "none",
-        legend.key.size  = unit(0.99, 'cm'),
-        legend.key.width = unit(0.7, 'cm'),
-        legend.text  = element_text(size = 12),
-        legend.title = element_text(size = 14, face = "bold"))
-
-ggsave("06-Mar-23_Association effect in Step 3 vs in interrogation.png", 
-       last_plot(), width = 9, height = 5.5, pointsize = 5, dpi = 300, units = "in")
-
-  # Joining with Step4
+  #----------#
+  # ggplot(aes(x = Estimate_step3b_aligned, y = Estimate_step3, color = Locus, shape = Locus)) +
+  # geom_abline(slope = 1, lty = 2) +
+  # geom_vline(xintercept = 0) +
+  # geom_hline(yintercept = 0) +
+  # geom_point(alpha = 0.9, size = 3.5) +
+  # scale_shape_manual(values = c(19, 17, 18, 17, 19, 15, 17, 19, 17, 19, 15)) +
+  # scale_color_manual(values = c(
+  #            "maroon1",
+  #            "darkorchid2",
+  #            "orange2", 
+  #            "green4", 
+  #            "steelblue2",
+  #            "darkturquoise",
+  #            "tomato",
+  #            "springgreen2",
+  #            "royalblue2",
+  #            "gold",
+  #            "grey50")) +
+  # labs(x = "Effect size of variants association with traits found in databases",
+  #      y = "Effect size of variants association with traits found in CHRIS") +
+  # theme(panel.background = element_rect(fill = "white"),
+  #       panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
+  #       panel.grid.major.x = element_line(linetype = 'solid', color = "grey80", size = .15),
+  #       axis.text  = element_text(size = 8,  face = "bold"),
+  #       axis.title = element_text(size = 12, face = "bold"),
+  #       #legend.position = "none",
+  #       legend.key.size  = unit(0.99, 'cm'),
+  #       legend.key.width = unit(0.7, 'cm'),
+  #       legend.text  = element_text(size = 12),
+  #       legend.title = element_text(size = 14, face = "bold"))
+  # ggsave("07-Mar-23_Association effect in Step 3 vs in interrogation only with outlier in step 2.png", 
+  #        last_plot(), width = 9, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+  #----------#
+  # Joining with step4
   inner_join(results_Step4_long %>% 
-               rename(Estimate_Step4 = Estimate, SE_Step4 = SE, Pvalue_Step4 = Pvalue),
+               rename(Estimate_step4 = Estimate, SE_step4 = SE, Pvalue_step4 = Pvalue),
              by = c("SNPid" = "SNPid",
                     "Locus" = "Locus",
-                    "Trait" = "pheno")) %>% colnames()
-  mutate(Mediator = ifelse(outlier == "Yes" & related == "Yes", "Yes", "No"),
-         Change_P = round((Beta_CHRIS - Estimate_Step2) / Beta_CHRIS * -100, 2),
+                    "Trait" = "pheno")) %>%
+  mutate(Mediator = case_when(outlier == "Yes" & associated_step3a == "Yes" ~ "Yes",
+                              outlier == "Yes" & associated_step3b == "Yes" ~ "Yes",
+                              TRUE ~ "No"),
+         Change_P = round((Beta_CHRIS - Estimate_step2) / Beta_CHRIS * -100, 2),
          EA_OA = paste0(EA_CHRIS_disc, "/", RA_CHRIS_disc)) %>% 
   rename(Estimate_GWAS  = Beta_CHRIS,
          SE_GWAS        = SE_CHRIS,
-         Pvalue_GWAS    = Pvalue_CHRIS,
-         Estimate_Step4 = Estimate,
-         SE_Step4       = SE,
-         Pvalue_Step4   = Pvalue) %>%
-  select(Locus, SNPid, RSID, EA_OA, ends_with("GWAS"), everything()) %>%
+         Pvalue_GWAS    = Pvalue_CHRIS) %>%
+  select(Locus, SNPid, RSID, EA_OA, ends_with("GWAS"), everything()) #%>%
+  #write.csv(., "07-Mar-23_SNP-wise summary of mediation analysis steps.csv", row.names = FALSE, quote = FALSE)
+#----------#
+
+# mediatory SNPs
+sum3steps_long %>%
   filter(Mediator == "Yes",
-         Trait    != "SCr") %>% 
-    as_tibble() %>% colnames()
+         Trait    != "SCr") %>%
+  as_tibble() #%>%
+  #write.csv("07-Mar-23_Table 3_Step1&2&3&4_17 mediator SNPs either in CHRIS or in consortia.csv", row.names = F, quote = F)
+
+
+# Finally the first part of the project finished on Tuesday at 16:30, 07-Mar-2023. 
 
 
 
