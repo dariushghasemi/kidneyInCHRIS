@@ -551,6 +551,8 @@ gc_pscanner %>%
 # Joining the results of interrogation in Phenoscanner and 
 # GWAS Catalog with mediation analysis steps
 
+# Supplementary table 4: Mediation analysis results
+
 sum3steps_long <-
   repSNPs %>%
   # Step1 or GWAS
@@ -572,7 +574,9 @@ sum3steps_long <-
   #full_join(opentargets, ., by = "SNPid", suffix = c("_OT", "_PS")) %>%
   # Taking the common associated variants in step3 and interrogation 
   #filter(!is.na(Pvalue_step3b)) %>%
-  mutate(EA_step3ab              = ifelse(EA_CHRIS_disc == EA_step3b, "concordant", "discor"),
+  mutate(Pvalue_CHRIS_1s = Pvalue_CHRIS/2,
+         # Check concordance of effect allele in CHRIS with interrogated study
+         EA_step3ab              = ifelse(EA_CHRIS_disc == EA_step3b, "concordant", "discor"),
          Estimate_step3b_aligned = ifelse(EA_CHRIS_disc == EA_step3b, Estimate_step3b, -Estimate_step3b),
          Assoc_dir_step3ab       = ifelse(Estimate_step3 * Estimate_step3b_aligned < 0,
                                       "inconsis", "consistent"),
@@ -640,11 +644,13 @@ sum3steps_long <-
   rename(Estimate_GWAS  = Beta_CHRIS,
          SE_GWAS        = SE_CHRIS,
          Pvalue_GWAS    = Pvalue_CHRIS) %>%
-  select(Locus, SNPid, RSID, EA_OA, ends_with("GWAS"), everything()) #%>%
-  #write.csv(., "07-Mar-23_SNP-wise summary of mediation analysis steps.csv", row.names = FALSE, quote = FALSE)
+  select(Locus, RSID, SNPid, EA_OA, ends_with("GWAS"), Pvalue_CHRIS_1s, everything()) %>% 
+  select(-c(EA_CHRIS_disc, RA_CHRIS_disc)) #%>%
+  #write.csv(., "08-Mar-23_SNP-wise summary of mediation analysis steps.csv", row.names = FALSE, quote = FALSE)
 #----------#
 
-# mediatory SNPs
+# Table 3 of the paper - mediator variants
+
 sum3steps_long %>%
   filter(Mediator == "Yes",
          Trait    != "SCr") %>%
@@ -653,7 +659,7 @@ sum3steps_long %>%
 
 
 # Finally the first part of the project finished on Tuesday at 16:30, 07-Mar-2023. 
-
+# The last modification was to add the 1-sided p-values of the GWAS to the mediation analysis results on 16:40, 08-Mar-2023. 
 
 
 
