@@ -131,7 +131,7 @@ repSNPs %>%
   
 
 #------------#
-# Supplementary tables 2: 147 Loci in CKDGen and CHRIS
+# Supplementary table 2: 147 Loci in CKDGen and CHRIS
 
 repSNPs_EA %>%
   rename(EA_CKDGen_disc  = EA_CKDGen,

@@ -131,6 +131,6 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Then the joined interrogation summary results was merged with step 3 of the mediation analysis (27-Feb-23).
 
-
+- The tables in the paper as well as the supplementary files and tables were all updated with the latest finding after merging interrogation results with the mediation analysis steps. The paper was sent to teh PI and pending for his reaction. Then, it would be ready to be circulated among the coauthors (09-Mar-23).
 
 
