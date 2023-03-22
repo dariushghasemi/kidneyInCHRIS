@@ -98,7 +98,7 @@ results_step3_long_pscanner <-
   geom_bar(stat = "identity",
            position = position_dodge(),
            mapping = aes(x = reorder(trait, n), y = n),
-           nshow.legend = FALSE,
+           show.legend = FALSE,
            width = 0.7,
            fill = "steelblue2",
            color = "grey50") +

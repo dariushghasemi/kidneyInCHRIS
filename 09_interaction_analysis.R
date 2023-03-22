@@ -406,28 +406,27 @@ library(interactions)
 library(jtools)
 #---------#
 
-# Emerging SNP-TSH interaction via package `chr8:23885208`
+# Emerging SNP-TSH interaction via package `chr8:23885208` `chr8:23894869`
 int_SNP2 <-
   interact_plot(
-  lm(paste0("eGFRw.log ~ `chr8:23885208` * TSH + Sex + Age +", PCs), vcfReg_TSHmod),
-  pred = `chr8:23885208`,
+  lm(paste0("eGFRw.log ~ `chr8:23894869` * TSH + Sex + Age +", PCs), vcfReg_TSHmod),
+  pred = `chr8:23894869`,
   modx = TSH,
   interval = T,
   linearity.check = F,
   plot.points = F,
-  #colors = "seagreen",
+  colors = "seagreen",
   #legend.main = "Custom Legend Title",
-  x.label = "Dosage for 8:23885208 variant at *STC1* locus",
-  y.label = "log(eGFRcreat)") +
+  x.label = "Dosage for rs819185 at *STC1* locus",
+  y.label = "ln(eGFRcrea)") +
   theme_classic() +
   #jtools::theme_apa()
   theme(panel.background = element_rect(fill = "white"),
         strip.background = element_blank(),
         strip.text.x = element_text(size = 12, face = "bold"),
         strip.placement = "outside",
-        axis.text.x  = element_text(size = 8,  face = "bold"),
-        axis.text.y  = element_text(size = 7,  face = "bold"),
-        axis.title   = element_text(size = 14, face = "bold"),
+        axis.text    = element_text(size = 8,  face = "bold"),
+        axis.title   = element_text(size = 12, face = "bold"),
         axis.title.x = ggtext::element_markdown(),
         legend.position = c(.8, .22),
         legend.key.size  = unit(0.8, 'cm'),
@@ -438,17 +437,14 @@ int_SNP2 <-
 
 # 1st way
 library(gridExtra)
-grid.arrange(int_SNP2, int_SNP1, ncol = 2, labels = c("A", "B"))
+grid.arrange(int_SNP1, int_SNP2, ncol = 2, labels = c("A", "B"))
+
 
 # 2nd way
-ggpubr::ggarrange(int_SNP2, int_SNP1, #bp + rremove("x.text"), 
-          labels = c("A", "B"), ncol = 2, nrow = 1)
-
-# 3rd way
-cowplot::plot_grid(int_SNP2, int_SNP1, labels = c("A", "B"), ncol = 2, nrow = 1)
+cowplot::plot_grid(int_SNP1, int_SNP2, labels = c("A", "B"), ncol = 2, nrow = 1)
 
 
-ggsave("20-Feb-23_SNP-TSH interactions chr8_23885208 and chr8_23894869 at STC1.png",
+ggsave("22-Mar-23_SNP-TSH interactions rs819196 and rs819185 at STC1.png",
        width = 11, height = 5, pointsize = 5, dpi = 300, units = "in")
 
 

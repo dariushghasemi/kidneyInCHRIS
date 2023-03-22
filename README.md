@@ -135,4 +135,7 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Thanks to the PI, the paper was circulated among the coauthors (14-Feb-23).
 
+- The feedback from the coauthors were integrated and sent back to the PI. The figures number 2,3,5 were modified and corrected according to the feedbacks (22-Mar-23).
+
+Dariush
 

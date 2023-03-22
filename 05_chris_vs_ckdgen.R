@@ -160,7 +160,7 @@ repSNPs_EA %>%
   select(Locus, RSID, SNPid, EA_OA,
          #EA_CKDGen_disc, RA_CKDGen_disc, EA_CHRIS_tmp, RA_CHRIS_tmp, Check_EA, EA, OA, EA_OA,
          EAF_CKDGen, Beta_CKDGen,    SE_CKDGen, Pvalue_CKDGen,
-         EAF_CHRIS,  Beta_CHRIS_tmp, SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) %>% #View()
+         EAF_CHRIS,  Beta_CHRIS_tmp, SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) %>% #View
   write.csv("19-Jan-23_Suppl. Table 2_147 CKDGen Loci.csv", row.names = FALSE)
 
 # Alt+- is a shortcut for <-
@@ -185,10 +185,13 @@ repSNPs %>%
   #filter(Pvalue_CHRIS <= 0.00068) %>%     #Checking UMOD in all 147 CKDGen Loci
   mutate(EA_OA          = paste0(EA, "/", OA),
          Beta_SE_CKDGen = paste0(Beta_CKDGen_ald, '(', round(SE_CKDGen,6), ')'),
-         Beta_SE_CHRIS  = paste0(Beta_CHRIS_ald,  '(', round(SE_CHRIS, 6), ')')) %>%
+         Beta_SE_CHRIS  = paste0(Beta_CHRIS_ald,  '(', round(SE_CHRIS, 6), ')'),
+         Pvalue_CHRIS_1s = Pvalue_CHRIS/2) %>%
   select(SNPid, Locus, RSID, EA_OA,
          EAF_CKDGen, Beta_SE_CKDGen, Pvalue_CKDGen,
-         EAF_CHRIS,  Beta_SE_CHRIS,  Pvalue_CHRIS) %>% #View()
+         EAF_CHRIS,  Beta_SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) %>%
+  # Find the smallest and the largest p-values among the loci
+  #top_n(n = -1, wt = Pvalue_CHRIS_1s) %>% View
   write.csv("10-Jan-23_Table 2_Leading SNPs of the replicated loci.csv", row.names = FALSE) #"10-Jan-23_Supp Table 3_162 Replicated SNPs.csv"
   
 #-----------------------------------------------------#
@@ -254,7 +257,7 @@ repSNPs %>%
 
 
 #-----------------------------------------------------#
-# --------------- MAF vs Effect ratio ----------------
+# ----------- Figure 3: MAF vs Effect ratio ----------
 #-----------------------------------------------------#
 
 library(ggfittext)
@@ -281,9 +284,9 @@ repSNPs %>%
   annotate("segment", x = 1.005, xend = 1.195, y = 6, yend = 6, colour = "grey50", size = 1.2,
            arrow = arrow(ends = "both", angle = 90, length = unit(0.2, "cm"))) +
   annotate("text", x = 0.85, y = 6.3, size = 4,
-           label = "Rarer alleles in CHRIS\nLarger effect in CHRIS") +
+           label = "Rarer alleles in CHRIS") + #\nLarger effect in CHRIS
   annotate("text", x = 1.09, y = 6.3, size = 4, 
-           label = "Rarer alleles in CKDGen\nLarger effect in CHRIS") +
+           label = "Rarer alleles in CKDGen") +#\nLarger effect in CHRIS
   # annotate("text", x = 0.23, y = 5.6, size = 4, label = "CASZ1") +
   # annotate("text", x = 0.7, y = 5.1, size = 4, label = "CASZ1") +
   # annotate("text", x = 0.59, y = 4, size = 4, label = "GAB2") +
@@ -297,17 +300,20 @@ repSNPs %>%
         panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
         panel.grid.major.x = element_blank(),
         axis.text  = element_text(size = 8,  face = "bold"),
-        axis.title = element_text(size = 14, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
         #legend.position = "none",
         legend.key.size  = unit(0.99, 'cm'),
         legend.key.width = unit(0.7, 'cm'),
-        legend.text  = element_text(size = 12),
-        legend.title = element_text(size = 14, face = "bold"))
+        legend.text  = element_text(size = 12, face = "italic"),
+        legend.title = element_text(size = 13, face = "bold"))
 
-ggsave("10-Jan-23_MAF Ratio vs Effect Size Ratio in CHRIS and CKDGen.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("22-Mar-23_MAF Ratio vs Effect Size Ratio in CHRIS and CKDGen.png", 
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+
+
 
 #-----------------------------------------------------#
-# ----------------- Line range plot ------------------
+# ----------------- Figure 2: Line range -------------
 #-----------------------------------------------------#
 
 # The difference of Effect size in CHRIS and CKDGen
@@ -340,10 +346,10 @@ repSNPs %>%
                    breaks = tagSNPs$Locus,
                    labels = paste0(tagSNPs$Locus,
                                    "\n",
-                                   tagSNPs$SNPid)) +
+                                   tagSNPs$RSID)) +
   scale_y_continuous(breaks = seq(-.035, .001, .005)) +
   #theme_light(base_size = 10) +
-  labs(y = "Effect on ln(eGFR)", x = NULL) + # x = "Locus"
+  labs(y = "Effect on ln(eGFRcrea)", x = NULL) + # x = "Locus"
   coord_cartesian(ylim = c(-0.035, 0.001)) +
   theme(legend.title = element_blank(),
         legend.position = c(.9, .365),
@@ -352,12 +358,13 @@ repSNPs %>%
         panel.grid.minor.x = element_blank(),
         panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
         axis.text.y  = element_text(size = 8,  face = "bold"),
-        axis.text.x  = element_text(size = 6,  face = "bold.italic"),
+        axis.text.x  = element_text(size = 8,  face = "bold.italic"),
         axis.title   = element_text(size = 14, face = "bold"),
         legend.key.size = unit(0.6, 'cm'),
         legend.text  = element_text(size = 12))
 
-ggsave("10-Jan-23_Comparison of leading SNPs Effect size_wot Locus.png", last_plot(), width = 8.5, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("22-Mar-23_Comparison of leading SNPs Effect size_wot Locus.png",
+       last_plot(), width = 8.5, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 #-----------------------------------------------------#
 
 #filling the locus information missed for some of the replicated variants

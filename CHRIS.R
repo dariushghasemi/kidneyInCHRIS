@@ -371,12 +371,14 @@ library(haplo.stats)
 # Export chris phenotype data for haplotype Regression analysis
 vcfReg_Mag %>% 
   select(AID, Age, Sex, eGFRw.log.Res, starts_with("PC")) %>% 
-  write.table("06-Nov-2022_chris4HaploReg.txt", sep = "\t", row.names = FALSE, quote=FALSE)
-
+  write.table("06-Nov-2022_chris4HaploReg.txt",
+              sep = "\t", row.names = FALSE, quote=FALSE)
+#----------#
 
 # Achieving hot region based on recombination rate
 # for rsid 4:76480299 in SHROOM3 in GRCh38 -> n=10,758
 recombSHROOM3 <- read.table("D:\\Dariush\\PhD\\Analysis\\Data\\recomb-hg38\\recomb-hg38\\plink.GRCh38.map\\plink.chr4.GRCh38.map", header = FALSE, sep = " ")
+#----------#
 
 # Genotype data
 vcfSHROOM3 <- 
@@ -384,6 +386,7 @@ vcfSHROOM3 <-
              col.names = c("AID", "CHR", "POS", "MARKER_ID", "REF", "ALT", "Dosage"), 
              #nrows = 107579, 
              sep = "\t", stringsAsFactors = FALSE) #%>% count(POS)
+#----------#
 
 vcfSHROOM3_long <-
   vcfSHROOM3 %>%
@@ -401,6 +404,7 @@ vcfSHROOM3_long <-
             "eGFRw.log.Res")],
     by="AID")
   #slice_head(n = 1000)#filter(AID != "0010197321")#%>% head()
+#----------#
 
 recombSHROOM3 %>% #head(100) %>% View() 
   rename(CHR = V1, POS = V4, recombRate = V3) %>% 
@@ -424,10 +428,39 @@ recombSHROOM3 %>% #head(100) %>% View()
         axis.title.y = element_text(size = 10, face="bold"),
         axis.text.x  = element_text(size = 5,  face="bold"),
         axis.text.y  = element_text(size = 5,  face="bold"))
+#----------#
 
-#----------#
-#Example run
-#----------#
+# Clinically relevant variants in SHROOM3 locus
+read.csv("C:\\Users\\dghasemisemeskandeh\\Documents\\haplotype_regression\\gnomAD_v3.1.2_4-76214040-76435228_20230312.csv", na.strings = c("", "NA")) %>%
+  rbind(read.csv("C:\\Users\\dghasemisemeskandeh\\Documents\\haplotype_regression\\gnomAD_v3.1.2_SHROOM3.csv", na.strings = c("", "NA"))) %>%
+  janitor::clean_names() %>%
+  count(vep_annotation) %>%
+  mutate(vep_annotation = str_trim(vep_annotation, side = "both"),
+         vep_annotation = str_replace(vep_annotation, "_variant", ""),
+         p = n/sum(n),
+         structure = reorder(vep_annotation, n)) %>%
+  filter(!str_detect(vep_annotation, "intron|NA")) %>%
+  ggplot(aes(x = structure, y = n, fill = vep_annotation)) +
+  geom_bar(stat = "identity",
+           position = position_dodge(),
+           #mapping = aes(x = , y = n),
+           show.legend = FALSE,
+           width = 0.7,
+           fill = "steelblue2",
+           color = "grey50") +
+  labs(x = "variant", y = "count") + #"percentage"
+  coord_flip() +
+  theme_classic()
+  
+ggsave("16-Mar-23_Frequency of structural variants in SHROOM3 locus_count.png", 
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+
+
+
+
+#-----------------------------------------------------#
+#                    Example run
+#-----------------------------------------------------#
 
 data(hla.demo) 
 names(hla.demo)
@@ -480,9 +513,9 @@ fit.gaus <- haplo.glm(y ~ male + geno.glm,
 
 summary(fit.gaus)
 
-#-----------#
-#  SHROOM3  #
-#-----------#
+#-----------------------------------------------------#
+#                      SHROOM3
+#-----------------------------------------------------#
 
 # Genotypes
 SHROOM3.geno <- 
@@ -588,7 +621,9 @@ SHROOM3_haplo %>%
   
 # ggsave("06-Dec-22_Haplotype analysis results illustration3.png", 
 #        last_plot(), width = 12, height = 4, pointsize = 4, dpi = 300, units = "in")
-
+#----------#
+#----------#
+#----------#
 
 
 
