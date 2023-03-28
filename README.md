@@ -135,7 +135,9 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Thanks to the PI, the paper was circulated among the coauthors (14-Feb-23).
 
-- The feedback from the coauthors were integrated and sent back to the PI. The figures number 2,3,5 were modified and corrected according to the feedbacks (22-Mar-23).
+- The feedback from the coauthors were integrated and sent back to the PI. All figures were modified and corrected accordingly (22-Mar-23).
+
+- The last things was to update naming of aPTT in the figure. Then, the paper was submitted to the CHRIS access committee and checked later for the pligerism using LUMC iThenticate tool (28-Mar-23).
 
 Dariush
 

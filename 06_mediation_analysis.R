@@ -590,7 +590,7 @@ dev.off()
 
 
 #-----------------------------------------------------#
-#------------------ line range plot ------------------
+#---------------- Figure 4: line range ---------------
 #-----------------------------------------------------#
 
 #New line range plot for the paper
@@ -610,6 +610,24 @@ Locus_factor <- function(x) {
                     "GAB2\n11:78324786",
                     "IGF1R\n15:98733292",
                     "PDILT\n16:20381010"))
+}
+
+# with rsID
+Locus_factor <- function(x) {
+  factor(x,
+         levels = c("CASZ1","DDX1","SHROOM3","DAB2","SLC34A1",
+                    "TMEM60","STC1","PIP5K1B","GAB2","IGF1R","PDILT"),
+         labels = c("CASZ1\nrs74748843",
+                    "DDX1\nrs807624",
+                    "SHROOM3\nrs28817415",
+                    "DAB2\nrs10062079",
+                    "SLC34A1\nrs3812036",
+                    "TMEM60\nrs57514204",
+                    "STC1\nrs819196",
+                    "PIP5K1B\nrs2039424",
+                    "GAB2\nrs7113042",
+                    "IGF1R\nrs59646751",
+                    "PDILT\nrs77924615"))
 }
 
 #---------#
@@ -646,12 +664,13 @@ results_Step2_long %>%
                         "Visceral_Fat" = "Visceral Fat",
                         "Pulse_Rate" = "Pulse Rate",
                         "INR_PT"     = "INR PT",
-                        "APTT_ratio" = "APTT ratio",
+                        "APTT"       = "aPTT",
+                        "APTT_ratio" = "aPTT ratio",
                         "AST_GOT"    = "AST GPT",
                         "ALT_GPT"    = "ALT GPT",
                         "Urine_pH"   = "Urine pH"),
          Feature         = fct_reorder(Trait, Estimate,    .desc = F),
-         Feature_freq    = fct_reorder(Trait, outlier_Yes, .desc = T),
+         Feature_freq    = fct_reorder(Trait, outlier_Yes, .desc = F),
          Locus_reordered = Locus_factor(Locus)) %>%
   ggplot(aes(Estimate,
              Feature_freq,
@@ -665,7 +684,7 @@ results_Step2_long %>%
   geom_pointrange(aes(color = outlier), show.legend = F, fatten = 1.2) +
   scale_color_manual(values = c("grey50", "tomato3")) +
   scale_x_continuous(labels = scales::number_format(accuracy = 0.01)) +
-  coord_cartesian() + #For SHROOM3: xlim = c(-0.022, -0.004)
+  coord_cartesian() +
   facet_wrap(~ Locus_reordered, nrow = 1, scales = "free_x", shrink = T)+
   labs(x = "Trait-adjusted effect of CKDGen lead SNP at each locus") +
   theme_classic() +
@@ -679,7 +698,8 @@ results_Step2_long %>%
         strip.text.x = element_text(size = 8, color = "Black", face = "bold.italic"))
 
 #ggsave("Top_SNPs_LinerangePlot_CASZ1_10-Apr-22.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
-ggsave("20-Jan-23_Linerange plot for the leading SNP in each locus.png",
+
+ggsave("28-Mar-23_Linerange plot for the leading SNP in each locus.png",
        last_plot(), width = 12, height = 7, pointsize = 2, dpi = 300, units = "in")
 
 #---------#
