@@ -649,7 +649,8 @@ chris[chris$Participation=="2011-08-24" |
 #chris$UACR.Ins <- ifelse(chris$UrinAlbumin.Ins==0 & chris$UrinCreatinine.Ins==0, 0, 1)
 #------------------------------------------------------#
 
-
+#Exporting the quantile-normalized phenotypes for the follow-up analyese
+write.csv(chris, "chris_q-norm.csv", row.names = F, quote = F)
 
 #------------------------------------------------------#
 #------------------------------------------------------#
