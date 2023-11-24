@@ -106,6 +106,7 @@ vcfReg$Peptited <- case_when(vcfReg$AID %in% vcfProteomy$AID ~ "1", TRUE ~ "0")
 
 # Defining LR model for passing to map function
 vcf_model <- function(df){lm(eGFRw.log.Res ~ Dosage, data = df)}
+#-----------#
 
 vcfModels <- 
   vcfReg %>%
@@ -115,7 +116,7 @@ vcfModels <-
                values_to  = c("Dosage")) %>%
   group_by(SNPid, Peptited) %>%
   nest()
-
+#-----------#
   
 vcfModels %>%
   mutate(model = data %>% map(vcf_model),
@@ -157,7 +158,7 @@ vcfModels %>%
         legend.title = element_text(size = 14, face = "bold"))
   
 ggsave("26-Jan-23_SNPs effect for subset with_without proteins.png", last_plot(), width = 10, height = 7, pointsize = 4, dpi = 300, units = "in")
-
+#-----------#
                                           
 
 # nest(data = -Peptited) %>%
@@ -167,7 +168,7 @@ ggsave("26-Jan-23_SNPs effect for subset with_without proteins.png", last_plot()
 #        tidy    = model %>% map(broom::tidy),
 #        augment = model %>% map(broom::augment)) %>%
 # unnest(glance, tidy)
-
+#-----------#
 
 vcfModels %>%
   mutate(
@@ -176,7 +177,7 @@ vcfModels %>%
          tidy    = vcfModels %>% map(broom::tidy),
          augment = vcfModels %>% map(broom::augment)
          )
-
+#-----------#
 
 # Checking the distribution
 vcfReg[c("AID", "eGFRw.log.Res", "Peptited", "chr5:177386403")] %>%
