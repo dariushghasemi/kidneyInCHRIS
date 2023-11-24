@@ -2,6 +2,8 @@
 #  Comparing Replication with Discovery
 #=========================================#
 
+# Started on October 2021
+# Last update on January 2023 
 
 #---------- template result -----------
 
@@ -11,9 +13,16 @@ library(ggplot2)
 library(stringr)
 library(tidyverse)
 #-----------------------------------------------------#
-tempResult0 <- read_excel("E://Dariush//PhD//Analysis//Outputs//Template_results_211012_eGFR.log.std.xlsx", sheet=2, na="NA")#skip = 1, [-1, ]
-tempResult1 <- read.table("D://Dariush//PhD//Analysis//Outputs//Outputs_tables//Meta_replicatedSNPs_eGFRw.log.Res.all.txt", header= TRUE, sep = "\t", stringsAsFactors = FALSE)
-tempResult  <- merge(tempResult0[,c("CHR", "BEG", "Locus")], tempResult1, by = c("CHR", "BEG"), all.y = TRUE)
+
+# Reading the initial replication analysis results on ln(eGFRcrea)
+tempResult0 <- read_excel("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_MultiA/Template_results_211012_eGFR.log.std.xlsx", sheet = 2, na = "NA")#skip = 1, [-1, ]
+
+# Reading the first replication analysis results on the residuals of ln(eGFRcrea) made by indirect method
+tempResult1 <- read.table("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_MultiA/Meta_replicatedSNPs_eGFRw.log.Res.all.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+
+# adding the locus name to replication results 
+tempResult  <- merge(tempResult0[,c("CHR", "BEG", "Locus")],
+                     tempResult1, by = c("CHR", "BEG"), all.y = TRUE)
 
 tempResult1 <- as.data.frame(tempResult1)
 tempResult$Locus <- as.factor(tempResult$Locus)
@@ -24,16 +33,16 @@ mergedSupTable <- read.delim("E://Dariush//PhD//Analysis//mergedtable_hg19_Serum
 missedSNPs <- setdiff(Supptable$BEG, mergedSupTable$BEG)
 Supptable[Supptable$BEG == missedSNPs, c("chr","BEG")]
 
+#-----------------------------------------------------#
 # 147 CKDGen Loci
-repSNPs_EA <- read.csv("D://Dariush//PhD//Analysis//Outputs_tables//Replication_eGFRw.log.Res_EUR_A//31-Dec-22_Replication_of_147_EA_Loci_in_CHRIS.txt",
-                       sep = '\t')
+repSNPs_EA <- read.csv("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/Replication_eGFRw.log.Res_EUR_A/31-Dec-22_Replication_of_147_EA_Loci_in_CHRIS.txt", sep = '\t')
 
-#replication analysis results: 162 SNPs - Multi-Ancestry
-repSNPs_old <- read.csv("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\ReplicatedSNPs by eGFRw.log.Res.csv",
+# replication analysis results: 162 SNPs (Multi-Ancestry)
+repSNPs_old <- read.csv("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/ReplicatedSNPs by eGFRw.log.Res.csv",
                         stringsAsFactors = FALSE)
 
-#replication analysis results: 162 SNPs - European Ancestry
-repSNPs_tmp <- read.table("D:\\Dariush\\PhD\\Analysis\\Outputs_tables\\Replication_eGFRw.log.Res_EUR_A\\10-Jan-23_replicatedSNPs_eGFRw.log.Res.txt",
+# replication analysis results: 163 SNPs (European Ancestry) - including GWAS hit at PDILT locus
+repSNPs_tmp <- read.table("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/Replication_eGFRw.log.Res_EUR_A/10-Jan-23_replicatedSNPs_eGFRw.log.Res.txt",
                           header = T, stringsAsFactors = FALSE)
 
 #-----------------------------------------------------#
@@ -111,16 +120,19 @@ repSNPs <-
 # Supplementary table 3: 163 replicated SNPs in CKDGen and CHRIS
 
 repSNPs %>%
-  mutate(SNPid           = str_remove(SNPid, "chr"), #below I tried to fill in properly the missing EA/OA, EAF, beta, and SE
-         EA_OA           = case_when(is.na(Beta_CHRIS_ald) & Beta_CHRIS < 0 ~ paste0(EA_CHRIS_disc, "/", RA_CHRIS_disc),
-                                     is.na(Beta_CHRIS_ald) & Beta_CHRIS > 0 ~ paste0(RA_CHRIS_disc, "/", EA_CHRIS_disc),
-                                     TRUE ~ paste0(EA, "/", OA)),
-         EAF_CHRIS       = case_when(is.na(Beta_CHRIS_ald) & Beta_CHRIS < 0 ~ EAF_CHRIS_disc,
-                                     is.na(Beta_CHRIS_ald) & Beta_CHRIS > 0 ~ 1 - EAF_CHRIS_disc,
-                                     TRUE ~ EAF_CHRIS),
-         Beta_CHRIS_ald  = case_when(is.na(Beta_CHRIS_ald) & Beta_CHRIS < 0 ~ Beta_CHRIS,
-                                     is.na(Beta_CHRIS_ald) & Beta_CHRIS > 0 ~ Beta_CHRIS * (-1),
-                                     TRUE ~ Beta_CHRIS_ald),
+  mutate(SNPid = str_remove(SNPid, "chr"), #below I tried to fill in properly the missing EA/OA, EAF, beta, and SE
+         EA_OA = case_when(
+           is.na(Beta_CHRIS_ald) & Beta_CHRIS < 0 ~ paste0(EA_CHRIS_disc, "/", RA_CHRIS_disc),
+           is.na(Beta_CHRIS_ald) & Beta_CHRIS > 0 ~ paste0(RA_CHRIS_disc, "/", EA_CHRIS_disc),
+           TRUE ~ paste0(EA, "/", OA)),
+         EAF_CHRIS = case_when(
+           is.na(Beta_CHRIS_ald) & Beta_CHRIS < 0 ~ EAF_CHRIS_disc,
+           is.na(Beta_CHRIS_ald) & Beta_CHRIS > 0 ~ 1 - EAF_CHRIS_disc,
+           TRUE ~ EAF_CHRIS),
+         Beta_CHRIS_ald = case_when(
+           is.na(Beta_CHRIS_ald) & Beta_CHRIS < 0 ~ Beta_CHRIS,
+           is.na(Beta_CHRIS_ald) & Beta_CHRIS > 0 ~ Beta_CHRIS * (-1),
+           TRUE ~ Beta_CHRIS_ald),
          Pvalue_CHRIS_1s = Pvalue_CHRIS/2) %>%
   select(Locus, RSID, SNPid, EA_OA,
          EAF_CKDGen, Beta_CKDGen_ald, SE_CKDGen, Pvalue_CKDGen,
@@ -235,7 +247,8 @@ ggcorrplot(corr,
            p.mat = p.mat, #Barring the non-significant coefficient
            lab = TRUE)# Add correlation coefficients
 
-ggsave("10-Jan-23_Correlation matrix for MAF_Ratio and Effect_Ratio in CHRIS and CKDGen.png", last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("10-Jan-23_Correlation matrix for MAF_Ratio and Effect_Ratio in CHRIS and CKDGen.png", 
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
 #-------------#
 # Quantify Effect difference by MAF.diff
@@ -252,7 +265,8 @@ repSNPs %>%
   unnest(tidy) %>%
   filter(term != "(Intercept)") %>% 
   select(-data, -model) %>%
-  write.csv("31-Jan-23_Quantifying MAF difference by regressing on effect difference.csv", quote = F, row.names = F)
+  write.csv("31-Jan-23_Quantifying MAF difference by regressing on effect difference.csv", 
+            quote = F, row.names = F)
 
 
 
@@ -413,7 +427,8 @@ p1 <-
         legend.text  = element_text(size = 14),
         legend.title = element_text(size = 16))
 
-#ggsave("effectDiff_eGFRw_slides.png",last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("effectDiff_eGFRw_slides.png",last_plot(), width = 8, height = 5.5, 
+       pointsize = 5, dpi = 300, units = "in")
 #-------------#
 
 p2 <- 
@@ -452,7 +467,8 @@ p2 <-
 library(gridExtra)
 p3 <- grid.arrange(p1, p2, ncol=1)
 
-ggsave("21-Apr-22_CKDGen Betas versus MAF.Diff & CHRIS Betas_4Poster.png", p3, width = 10, height = 6.5, pointsize = 8, dpi = 600, units = "in")
+ggsave("21-Apr-22_CKDGen Betas versus MAF.Diff & CHRIS Betas_4Poster.png", 
+       p3, width = 10, height = 6.5, pointsize = 8, dpi = 600, units = "in")
 #-----------------------------------------------------#
 library(reshape2)
 #melt((tempResult[, c("Locus", "MAF.ckdgen", "MAF.log.Std" ,"MAF.Diff")]), id.vars = )
@@ -477,7 +493,8 @@ tempResult %>%
   #geom_text(aes(label= Locus), size = 1.5)+
   scale_shape_manual(values=c(0, 1, 2,3, 7, 8, 9, 15, 16, 17))+ theme_bw()#, 15, 16, 17
 
-ggsave("CKDGen Beta vs CHRIStoCKDGen.Effects Ratio.png",last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("CKDGen Beta vs CHRIStoCKDGen.Effects Ratio.png",
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 #-------------#
 tempResult %>% 
   drop_na(CHRIS.CKDGen.Effect.Ratio) %>%
@@ -486,7 +503,8 @@ tempResult %>%
   geom_hline(yintercept=0)+ geom_vline(xintercept=0)+
   scale_shape_manual(values=c(0, 1, 2, 3, 7, 8, 9, 15, 16, 17))+ theme_bw()
 
-ggsave("MAF.Diff vs CHRIStoCKDGen.Effects Ratio.png",last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
+ggsave("MAF.Diff vs CHRIStoCKDGen.Effects Ratio.png",
+       last_plot(), width = 8, height = 5.5, pointsize = 5, dpi = 300, units = "in")
 
 write.csv(tempResult,"ReplicatedSNPs by eGFRw.log.Res.csv")
 
