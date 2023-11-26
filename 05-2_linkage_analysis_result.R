@@ -63,9 +63,9 @@ ld_varinats %>%
 # create a variants file for extraction from VCF
 ld_varinats %>%
   select(CHR, POS1, POS2) %>%
-  pivot_longer(cols = c(POS1, POS2), names_to = "Position") %>% 
-  distinct(CHR, value) %>%
-  pivot_wider(names_from = Position, values_from = value)
+  pivot_longer(cols = c(POS1, POS2), names_to = "Position", values_to = "POS") %>% 
+  distinct(CHR, POS) %>%
+  write.table("25-Nov-23_variants_in_ld.txt", sep = "\t", quote = F, row.names = F)
 
 
 ld_varinats %>%
