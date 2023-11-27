@@ -17,6 +17,7 @@ Several issues have been created to track the progress in the project. Here is t
 * [10- Kidney interaction with Thyroid](#10-kidney-interaction-with-thyroid)
 * [11- Sensitivity Analyses](#11-sensitivity-analyses)
 * [12- Interrogating SNPs in Phenoscanner](#12-interrogating-snps-in-phenoscanner)
+* [13- Publication and manuscript revision](#13-publication-and-manuscript-revision)
 ___________________________________________________________________________________________________________
 
 
@@ -138,6 +139,14 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 - The feedback from the coauthors were integrated and sent back to the PI. All figures were modified and corrected accordingly (22-Mar-23).
 
 - The last things was to update naming of aPTT in the figure. Then, the paper was submitted to the CHRIS access committee and checked later for the pligerism using LUMC iThenticate tool (28-Mar-23).
+
+# 13. Publication and manuscript revision
+
+- Request for the revison of the paper was received on November 20th.
+
+- List of in-LD variants created using `05-2_linkage_analysis_result.R` (25-Nov-23).
+
+- Extraction of the dosage of in-LD variants was done in five minutes on the Eurac servers using `05-3_extrating_in-LD_variants.sh` (Mon, 19:05, 27-Nov-23).
 
 Dariush
 

@@ -12,3 +12,5 @@ README.html
 *.csv
 *.png
 .Rhistory
+slurm*
+27-Nov-23_variants_in_ld_dosage.txt
