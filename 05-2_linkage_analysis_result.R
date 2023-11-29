@@ -77,7 +77,7 @@ repSNPs_tmp %>% as_tibble() %>%
   # 0.05/(6337/2) = 1.578e-05
   filter(Pvalue_CHRIS <= 1.578e-5) %>%
   # 0.05/(6337) = 8.03471e-06
-  filter(Pvalue_CHRIS <= 7.890e-6) %>%
+  #filter(Pvalue_CHRIS <= 7.890e-6) %>%
   count(Locus)
 
 # A tibble: 2 × 2

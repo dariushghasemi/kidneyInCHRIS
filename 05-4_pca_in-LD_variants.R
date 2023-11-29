@@ -8,12 +8,14 @@
 # The data here correspond TOPMedR2 imputed CHRIS10K.
 # The genomic build is GRCh38.
 
+#------------#
 library(tidyverse)
 
 # read the dosage file of the variants in strong LD (r2 > 0.8)
 inLD_variants <- read.delim("27-Nov-23_variants_in_ld_dosage.txt",
                              header = T)
 
+#------------#
 # reshaping the dosage file to have SNPs in columns
 inLD_wide <- inLD_variants %>%
   pivot_wider(id_cols = AID,
@@ -23,6 +25,19 @@ inLD_wide <- inLD_variants %>%
 # run PCA on dosage levels of the variants
 inLD_PCA <- prcomp(inLD_wide %>% select(- AID), scale. = T)
 
+#------------#
+# representing the cumulative variances explained by PCs
+install.packages("factoextra")
+library(factoextra)
+
+fviz_eig(inLD_PCA, addlabels = TRUE, ylim = c(0, 50)) + 
+  theme_classic() +
+  theme(title = element_blank())
+
+ggsave("29-Nov-23_pcs_vs_total_varinace_explained", 
+       last_plot(), width = 9, height = 5.5, dpi = 300, units = "in")
+
+#------------#
 # Calculate the cumulative variance explained by each component
 cumulative_var <- cumsum(inLD_PCA$sdev^2) / sum(inLD_PCA$sdev^2)
 sum(cumulative_var <= 0.95)
@@ -33,10 +48,12 @@ message <- paste(sum(cumulative_var <= 0.99),
                  length(inLD_PCA$sdev),
                  "in-LD variants.")
 
+#------------#
 # show the number PCA explaining %95 of teh total variants
 cat("\n", message, "\n")
 
 # save the variance (standard deviations^2) explained by PCs
-write.table(inLD_PCA$sdev^2, "28-Nov-23_variance_explained_by_pcs.txt", quote = F)
+write.table(inLD_PCA$sdev^2, "29-Nov-23_variance_explained_by_pcs.txt", quote = F)
 
+#------------#
 # sbatch --wrap 'Rscript 05-4_pca_in-LD_variants.R'  -c 4 --mem-per-cpu=8GB -J "05-4.R"
