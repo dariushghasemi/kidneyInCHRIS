@@ -30,12 +30,12 @@ inLD_PCA <- prcomp(inLD_wide %>% select(- AID), scale. = T)
 install.packages("factoextra")
 library(factoextra)
 
-fviz_eig(inLD_PCA, addlabels = TRUE, ylim = c(0, 50)) + 
+plot_pca <- fviz_eig(inLD_PCA, addlabels = TRUE, ylim = c(0, 50)) + 
   theme_classic() +
   theme(title = element_blank())
 
-ggsave("29-Nov-23_pcs_vs_total_varinace_explained", 
-       last_plot(), width = 9, height = 5.5, dpi = 300, units = "in")
+ggsave("29-Nov-23_pcs_vs_total_varinace_explained.png", 
+       plot_pca, width = 9, height = 5.5, dpi = 300, units = "in")
 
 #------------#
 # Calculate the cumulative variance explained by each component
