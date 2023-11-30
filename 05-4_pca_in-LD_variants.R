@@ -29,13 +29,13 @@ inLD_PCA <- prcomp(inLD_wide %>% select(- AID), scale. = T)
 #install.packages("factoextra")
 library(factoextra)
 
-plot_pca <- fviz_eig(inLD_PCA, addlabels = F, ncp = 6100, ylim = c(0, 15)) +
+plot_pca <- fviz_eig(inLD_PCA, addlabels = F, ncp = 250, ylim = c(0, 15)) +
   scale_y_continuous(breaks = seq(0, 15, 1)) +
   theme_classic() +
   theme(title = element_blank())
 
 ggsave("30-Nov-23_pcs_vs_total_varinace_explained.png", 
-       plot_pca, width = 12, height = 6.5, dpi = 300, units = "in")
+       plot_pca, width = 12, height = 5.5, dpi = 300, units = "in")
 
 #------------#
 # Calculate the cumulative variance explained by each component
@@ -67,7 +67,7 @@ ggplot(expl_variance, aes(x = Components, y = Cumulative_Variance)) +
 
 # save the plot
 ggsave("30-Nov-23_No_of_pcs_explaining_total_varinace.png", 
-       last_plot(), width = 9, height = 6.5, dpi = 300, units = "in")
+       last_plot(), width = 9, height = 7.5, dpi = 300, units = "in")
 
 #------------#
 # Find the number of components needed for 95% and 99% cumulative variance explained

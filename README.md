@@ -148,7 +148,9 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Extraction of the dosage of in-LD variants was done in five minutes on the Eurac servers using `05-3_extrating_in-LD_variants.sh` (Mon, 19:05, 27-Nov-23).
 
-- Plotted the variance of i-LD variants explained by each PCs `05-4_pca_in-LD_variants.R`. Still nned to plot the number of PCs explaining different portion of the total variance of the data (Wed, 18:34, 29-Nov-23).
+- Plotted the variance of i-LD variants explained by each PCs `05-4_pca_in-LD_variants.R`. Still need to plot the number of PCs explaining different portion of the total variance of the data (Wed, 18:34, 29-Nov-23).
+
+- Histogram and cumulative distribution of number of PCs explaining different proportions of the total variance of the in-LD variants was genrated and the report was written and sent to the PI (Thu, 20:04, 30-Nov-23).
 
 Dariush
 
