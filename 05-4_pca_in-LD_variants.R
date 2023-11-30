@@ -40,20 +40,40 @@ ggsave("29-Nov-23_pcs_vs_total_varinace_explained.png",
 #------------#
 # Calculate the cumulative variance explained by each component
 cumulative_var <- cumsum(inLD_PCA$sdev^2) / sum(inLD_PCA$sdev^2)
-sum(cumulative_var <= 0.95)
 
-# Find the number of first components explaining >80% of the cumulative variance
-message <- paste(sum(cumulative_var <= 0.99), 
-                 "principal components are needed to explain 99% of the total variance of the",
-                 length(inLD_PCA$sdev),
-                 "in-LD variants.")
-
-#------------#
-# show the number PCA explaining %95 of teh total variants
-cat("\n", message, "\n")
+# Create a data frame for ggplot
+expl_variance <- data.frame(Components = 1:length(cumulative_var),
+                           Cumulative_Variance = cumulative_var)
 
 # save the variance (standard deviations^2) explained by PCs
-write.table(inLD_PCA$sdev^2, "29-Nov-23_variance_explained_by_pcs.txt", quote = F)
+write.table(expl_variance,
+            "30-Nov-23_cumulative_variance_explained_by_each_pc.txt",
+            quote = F, row.names = F)
+
+#------------#
+# Plot the cumulative variance explained using ggplot
+ggplot(expl_variance, aes(x = Components, y = Cumulative_Variance)) +
+  geom_line() +
+  geom_point(color = "steelblue", size = 3) +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0.99, linetype = "dashed", color = "blue") +
+  labs(x = "Number of Components", y = "Cumulative Variance Explained") +
+  theme_classic()
+
+# save the plot
+ggsave("30-Nov-23_No_of_pcs_explaining_total_varinace.png", 
+       last_plot(), width = 9, height = 5.5, dpi = 300, units = "in")
+
+#------------#
+# Find the number of components needed for 95% and 99% cumulative variance explained
+components_95 <- which(cumulative_variance >= 0.95)[1]
+components_99 <- which(cumulative_variance >= 0.99)[1]
+
+# Print the results
+cat("Number of components for 95% variance:", components_95, "\n")
+cat("Number of components for 99% variance:", components_99, "\n")
 
 #------------#
 # sbatch --wrap 'Rscript 05-4_pca_in-LD_variants.R'  -c 4 --mem-per-cpu=8GB -J "05-4.R"
+
+
