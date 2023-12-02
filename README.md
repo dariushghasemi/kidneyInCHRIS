@@ -152,5 +152,7 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Histogram and cumulative distribution of number of PCs explaining different proportions of the total variance of the in-LD variants was genrated and the report was written and sent to the PI (Thu, 20:04, 30-Nov-23).
 
+- The scripts written to be used for running GWAS on ln(eGFRcrea) and doing replication study in the CHRIS study were added to Github (Sat, 23:55, 02-Dec-23).
+
 Dariush
 
