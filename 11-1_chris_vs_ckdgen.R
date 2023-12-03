@@ -35,7 +35,7 @@ Supptable[Supptable$BEG == missedSNPs, c("chr","BEG")]
 
 #-----------------------------------------------------#
 # 147 CKDGen Loci
-repSNPs_EA <- read.csv("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/Replication_eGFRw.log.Res_EUR_A/31-Dec-22_Replication_of_147_EA_Loci_in_CHRIS.txt", sep = '\t')
+repSNPs_EA <- read.csv("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_EUR_A/31-Dec-22_Replication_of_147_EA_Loci_in_CHRIS.txt", sep = '\t')
 
 # replication analysis results: 162 SNPs (Multi-Ancestry)
 repSNPs_old <- read.csv("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/ReplicatedSNPs by eGFRw.log.Res.csv",
@@ -145,7 +145,7 @@ repSNPs %>%
 #------------#
 # Supplementary table 2: 147 Loci in CKDGen and CHRIS
 
-repSNPs_EA %>%
+repSNPs_EA_Suppl2 <- repSNPs_EA %>%
   rename(EA_CKDGen_disc  = EA_CKDGen,
          RA_CKDGen_disc  = RA_CKDGen,
          #EAF_CKDGen_disc = EAF_CKDGen,
@@ -172,9 +172,10 @@ repSNPs_EA %>%
   select(Locus, RSID, SNPid, EA_OA,
          #EA_CKDGen_disc, RA_CKDGen_disc, EA_CHRIS_tmp, RA_CHRIS_tmp, Check_EA, EA, OA, EA_OA,
          EAF_CKDGen, Beta_CKDGen,    SE_CKDGen, Pvalue_CKDGen,
-         EAF_CHRIS,  Beta_CHRIS_tmp, SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) %>% #View
-  write.csv("19-Jan-23_Suppl. Table 2_147 CKDGen Loci.csv", row.names = FALSE)
+         EAF_CHRIS,  Beta_CHRIS_tmp, SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) #%>% View
+  #write.csv("19-Jan-23_Suppl. Table 2_147 CKDGen Loci.csv", row.names = FALSE)
 
+#------------#
 # Alt+- is a shortcut for <-
 #------------#
 # Subsetting the leading or most significant SNPs

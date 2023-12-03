@@ -1,6 +1,5 @@
-
 #=========================================#
-#          Mediation Analysis
+#         Mediation Analysis: Full Script
 #=========================================#
 
 library(tidyverse)
@@ -984,12 +983,12 @@ ggplot(data = resAllModels3,
                                    resAllModels3_eGFR$SNPid)) +
   scale_color_manual(values=
                        c("grey50",      "gold3",       "darkorchid1",
-                                 "skyblue2",    "tomato",      "orange2",
-                                 "pink2",       "darkorchid3", "maroon1",
-                                 "brown2",      "orangered2",  "springgreen1",
-                                 "darkviolet",  "royalblue2",  "royalblue4",
-                                 "springgreen3","chartreuse3", "olivedrab3", "gold4"))+ #turquoise2
-                                   coord_cartesian(ylim = c(-0.05, 0.05)) +
+                         "skyblue2",    "tomato",      "orange2",
+                         "pink2",       "darkorchid3", "maroon1",
+                         "brown2",      "orangered2",  "springgreen1",
+                         "darkviolet",  "royalblue2",  "royalblue4",
+                         "springgreen3","chartreuse3", "olivedrab3", "gold4"))+ #turquoise2
+  coord_cartesian(ylim = c(-0.05, 0.05)) +
   labs(y = "Effect on log(eGFR)",
        fill = "Trait") +
   #scale_fill_discrete(name = "Title", labels = resAllModels3$outlier) +
