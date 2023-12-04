@@ -2,26 +2,30 @@
 
 
 # ----------------------------
-# User-defined variables
-working.dir     <- "/home/dghasemisemeskandeh/projects/gwas/Output/ReformedScheme" #getwd() 
-GWASresult.file <- "/home/dghasemisemeskandeh/projects/gwas/Output/ReformedScheme/eGFRw.log.Res.txt.gz"
-separator       <- "\t"
-max.no.rows     <- 10000 #2000600  # Take it from the last line of the metal output file
+# take the date and time
+format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 
-#setwd(working.dir)
-# ------------------------------------------------------------------------------------------------
+# date
+today.date <- format(Sys.Date(), "%d-%b-%y")
+print(paste("Today is: ", today.date))
+
+# ----------------------------
+# User-defined variables
+BASE.dir  <- "/home/dghasemisemeskandeh/projects/gwas"
+OUT.dir   <- paste0(BASE.dir, "/03_gwas_qc/outputs/")
+GWAS.file <- paste0(BASE.dir, "/Output/ReformedScheme/eGFRw.log.Res.txt.gz")
+OUT.mh    <- paste0(OUT.dir, today.date, "_MH_plot_eGFRw.log.Res_filtered.png")
+OUT.qq    <- paste0(OUT.dir, today.date, "_QQ_plot_eGFRw.log.Res_filtered_widen1.png")
+separator <- "\t"
+max.no.rows <- 2000600 #10000 #
+
 # ----------------------------
 # File upload
 # ----------------------------
 library(data.table)
-#library(R.utils) #install.packages('R.utils')
 
-#U <- read.table(GWASresult.file, header=TRUE, sep=separator, nrows=max.no.rows, stringsAsFactors=F)#col_names=TRUE
-#U <- read.delim(GWASresult.file, header=TRUE, sep=' ', dec=".", nrows=max.no.rows, stringsAsFactors=F)
-#U <- fread("filtered_S2UAlbum.Std.gz", header=FALSE, sep='\t', stringsAsFactors=F,nrows=max.no.rows) 
-
-U <- read.table(GWASresult.file, header=FALSE, sep= separator, stringsAsFactors=F)#, nrows=max.no.rows)
-names(U) = c("chr","BEG","END","MARKER_ID","NS", "AC","CALLRATE","GENOCNT","MAF","STAT","PVALUE","BETA","SEBETA","R2")  #, "GRCh38_POS" 
+U <- fread(GWAS.file, header = TRUE, sep = separator, stringsAsFactors = F, nrows=max.no.rows) #
+names(U) = c("chr","BEG","END","MARKER_ID","NS", "AC","CALLRATE","GENOCNT","MAF","STAT","PVALUE","BETA","SEBETA","R2") 
 
 # ----------------------------
 head(U)
@@ -32,17 +36,6 @@ str(U)
 #names(U) [names(U)=="#CHROM"] <- "chr1"
 names(U) [names(U)=="BEG"] <- "position"
 #names(U) [names(U)=="PVALUE"] <- "P.value"
-
-#U$chr = as.numeric(U$chr1) #cat(noquote((U$chr)) #print(U$chr, quote=FALSE)#
-#U$position = as.numeric(U$position)
-#U$MAF = as.numeric(U$MAF)
-#U$PVALUE = as.numeric(U$PVALUE)
-
-# ----------------------------
-#U$PVALUE <- suppressWarnings(as.numeric(U$PVALUE))
-#head(U)
-#str(U)
-#print(as.matrix(table(U$chr)))
 
 # ----------------------------
 # Genomic-Control (GC) Correction
@@ -58,12 +51,15 @@ gc_lambda1 <- function(p)
 
 # Lambda estimation
 mylambda <- gc_lambda1(U$PVALUE)
-GIF<-print(paste("Lambda =", round(mylambda, 3)))
+GIF <- print(paste("Lambda =", round(mylambda, 3)))
 
+# print time
+format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 
 # Generate GC corrected P-values and standard errors
 U$pval_gc <- pchisq(qchisq(U$PVALUE, df=1, lower.tail=F)/mylambda, df=1, lower.tail=F)
 #U$se_gc   <- U$StdErr*(mylambda^0.5)
+
 
 # ----------------------------------------------
 # Graphical output
@@ -90,8 +86,8 @@ QQplot_png <- function(p, png_file_name = "QQ_plot.png")
    lc05 <- -log(c05,10)
    
    # Axis labels
-   x.lab <- expression(Expected~~-log[10](italic(p-value)))#, cex.axis=1.5
-   y.lab <- expression(Observed~~-log[10](italic(p-value)))#, cex.axis=1.5
+   x.lab <- expression(Expected~~-log[10](italic(p-value)), cex.axis=1.5)#
+   y.lab <- expression(Observed~~-log[10](italic(p-value)), cex.axis=1.5)#
    
    png(png_file_name, width=1300, height=1300)
 
@@ -99,7 +95,7 @@ QQplot_png <- function(p, png_file_name = "QQ_plot.png")
    plot(null, lc95, ylim=c(0,MAX), xlim=c(0,max(null)), type="l", axes=FALSE, xlab="", ylab="")
    par(new=T, mar=c(7,6,5,1))
    plot(null, lc05, ylim=c(0,MAX), xlim=c(0,max(null)), type="l", axes=FALSE, xlab="", ylab="")
-   polygon(c(null,rev(null)), c(lc05, rev(lc95)), col="grey80", border="white")
+   polygon(c(null, rev(null)), c(lc05, rev(lc95)), col="grey80", border="white")
    lines(c(0,max(null)),c(0, max(null)), lwd=2)
 
    ## add diagonal
@@ -117,16 +113,16 @@ QQplot_png <- function(p, png_file_name = "QQ_plot.png")
           ylab="", 
           cex=1,
           font=2,
-          las=1,          #oriantation of axix lables
+          las=1,           #oriantation of axix lables
           #line=.2,        # Space beween axis title and axis lables
           #cex.main: Size of main title
-          #cex.lab=2.5,    #Size of axis labels (the text describing the axis)
-          cex.axis=1.5,    #Size of axis text (the values that indicate the axis tick labels
-          #mgp = c(4.5, 1, 0)  # Space beween axis title and axis lables
+          #cex.lab=2.5,    #axis labels size (text describing axis)
+          #cex.axis=2,    #axis text size (values indicating axis tick labels)
+          #mgp = c(4.5, 1, 0)  # Space between axis title and axis lables
           )
   
   title(xlab=x.lab, mgp=c(4.5,1,0), cex.lab=2.5, font=2)
-  title(ylab=y.lab, mgp=c(3,1,0), cex.lab=2.5, font=2)
+  title(ylab=y.lab, mgp=c(3,1,0),   cex.lab=2.5, font=2)
 
    legend("topleft", inset=.05, legend = GIF, cex = 2.5)
    #text("topleft", paste("Lambda = "))
@@ -134,7 +130,57 @@ QQplot_png <- function(p, png_file_name = "QQ_plot.png")
    dev.off()
 }
 
-QQplot_png(U$PVALUE, "/home/dghasemisemeskandeh/projects/gwas/mh-plots/31-Jan-23_QQ_plot_eGFRw.log.Res_filtered.png") # original
+#QQplot_png(U$PVALUE, OUT.qq) # original
+
+QQplot_png_org <- function(p, png_file_name = "QQ_plot.png")
+{
+   obs <- -log(p,10)
+   N <- length(obs) ## number of p-values
+   
+   ## create the null distribution (-log10 of the uniform)
+   null <- -log(1:N/N,10)
+   MAX <- max(c(obs,null), na.rm=TRUE)
+   
+   ## the jth order statistic from an Uniform(0,1) sample
+   ## has a beta(j,n-j+1) distribution
+   ## (Casella & Berger, 2002, 2nd edition, pg 230, Duxbury)
+   c95 <- qbeta(0.95,1:N,N-(1:N)+1)
+   c05 <- qbeta(0.05,1:N,N-(1:N)+1)
+   
+   lc95 <- -log(c95,10)
+   lc05 <- -log(c05,10)
+   
+   # Axis labels
+   x.lab <- expression(Expected~~-log[10](italic(p-value)),cex.axis=1.5)
+   y.lab <- expression(Observed~~-log[10](italic(p-value)),cex.axis=1.5)
+   
+   png(png_file_name, width=1500, height=1500)
+   
+   ## plot confidence lines
+   plot(null, lc95, ylim=c(0,MAX), xlim=c(0,max(null)), type="l", axes=FALSE, xlab="", ylab="")
+   par(new=T)
+   plot(null, lc05, ylim=c(0,MAX), xlim=c(0,max(null)), type="l", axes=FALSE, xlab="", ylab="")
+   polygon(c(null,rev(null)), c(lc05, rev(lc95)), col="grey80", border="white")
+   lines(c(0,max(null)),c(0, max(null)), lwd=2)
+   
+   ## add diagonal
+   par(new=T)#, mar=c(5,6,2,2)+2
+   
+   ## add qqplot
+   qqplot(null,obs, ylim=c(0,MAX),xlim=c(0,max(null)), main="", pch=16, bg="grey20", xlab="", ylab="", cex=1, las=1, cex.axis=1.5, cex.lab=4.5)
+   legend("topleft", inset=.05, legend = GIF, cex = 2.5)
+   title(xlab=x.lab, mgp=c(4.5,1,0), line=4, cex.lab=2.5, font=2)
+   title(ylab=y.lab, mgp=c(4.5,5,0), line=6, cex.lab=2.5, font=2)
+
+   dev.off()
+}
+
+QQplot_png_org(U$PVALUE, OUT.qq) # original
+
+# print time
+format(Sys.time(), "%a %b %e %H:%M:%S %Y")
+
+quit()
 
 #------------- Manhattan plot PNG -------------
 
@@ -163,11 +209,13 @@ MH_plot_PNG <- function(A, MH_file_name = "MH_plot.png", mytitle = "", color1 = 
     axis(side=1, at=middle.points, labels=as.character(c(1:22)), tick=F, cex.axis=1.5, las=1, pos=0)
     mtext(text="Chromosomes", side=1, cex=1.5, line=1.3)
     mtext(text=expression(-log[10]* (p-value)), side=2, line=3, cex=1.5)
-    abline(h=round(-log10(.05/343),0),lty=2,col="black")#abline(h=-log10(5*10^-8),lty=2,col="black")
+    abline(h=round(-log10(.05/343),0), lty=2, col="black")
+    #abline(h=-log10(5*10^-8),lty=2,col="black")
     
     dev.off()
   }
   
   
-#MH_plot_PNG(U, "/home/dghasemisemeskandeh/projects/gwas/mh-plots/31-Jan-23_MH_plot_eGFRw.log.Res_filtered.png")
-  
+#MH_plot_PNG(U, OUT.mh)
+
+### sbatch --wrap 'Rscript 03-2_gwas_qc.R'  -c 4 --mem-per-cpu=8GB -J "03-2.R"

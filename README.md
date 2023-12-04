@@ -140,21 +140,26 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - The last things was to update naming of aPTT in the figure. Then, the paper was submitted to the CHRIS access committee and checked later for the pligerism using LUMC iThenticate tool (28-Mar-23).
 
-# 13. Publication and manuscript revision
+## 13. Publication and manuscript revision
 
 - Request for the revison of the paper was received on November 20th.
 
-- List of in-LD variants created using `05-2_linkage_analysis_result.R` (25-Nov-23).
+- List of in-LD variants created using `06-1-2_ld_analysis_result.R` (25-Nov-23).
 
-- Extraction of the dosage of in-LD variants was done in five minutes on the Eurac servers using `05-3_extrating_in-LD_variants.sh` (Mon, 19:05, 27-Nov-23).
+- Extraction of the dosage of in-LD variants was done in five minutes on the Eurac servers using `06-1-3_ld_variants_extraction.sh` (Mon, 19:05, 27-Nov-23).
 
-- Plotted the variance of i-LD variants explained by each PCs `05-4_pca_in-LD_variants.R`. Still need to plot the number of PCs explaining different portion of the total variance of the data (Wed, 18:34, 29-Nov-23).
+- Plotted the variance of i-LD variants explained by each PCs `06-1-4_ld_variants_pca.R`. Still need to plot the number of PCs explaining different portion of the total variance of the data (Wed, 18:34, 29-Nov-23).
 
 - Histogram and cumulative distribution of number of PCs explaining different proportions of the total variance of the in-LD variants was genrated and the report was written and sent to the PI (Thu, 20:04, 30-Nov-23).
 
 - The scripts written to be used for running GWAS on ln(eGFRcrea) and doing replication study in the CHRIS study were added to Github (Sat, 23:55, 02-Dec-23).
 
-- Unnecessary scripts like `CHRIS.R` were removed from git repository and stored in local computer (Sun, 19:35, 03-Nov-23). 
+- The variance explained by the 147 GWAS hits were quantified and compared in both CHRIS and CKDGen. The quantities were illustrated in proper charts via `07-2_variance_explained.R` (Sun, 19:35, 03-Dec-23). 
+
+- Unnecessary scripts like `CHRIS.R` were removed from git repository and stored in local computer (Sun, 23:35, 03-Dec-23). 
+
+- Script orders corrected again. The script to genrate the qq-plot have been stored to be sent to the Reviewer (Mon, 13:40, 01-Dec-23).
+
 
 Dariush
 
