@@ -5,22 +5,23 @@
 # Started this script on 24-Nov-23 
 # after receiving the first revision of the paper
 
-
+#------------#
 # read the result of linkage analysis (built 38):
 # LD between variants in proxy of CKDGen GWAS hits
 result_linkage <- read.delim("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/linkageAnalysis/test_convert.txt",
                              header = T, colClasses = c("character", "character", "character", "numeric", "numeric", "numeric", "numeric"),
                              stringsAsFactors = FALSE)
-
+#------------#
 # read the 147 CKDGen identified leading signals
 # eGFRcrea-associated loci for EU Ancestry (built 37)
 result_ckdgen <- read.delim("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_MultiA/Supptable.txt",
                             header = T, colClasses = "character", stringsAsFactors = FALSE)
-
+#------------#
 # read the coordinates of meta-analysis summary stats both built 37 & 38
 bed38 <- read.delim("F:/Dariush/PhD/Analysis/Data/MetaBED38.txt",
                     header = T, colClasses = c("character", "character", "character", "character"), stringsAsFactors = FALSE)
 
+#------------#
 # adding locus name to the variants in LD
 b38_ckdgen <- result_ckdgen %>% 
   select(CHR, BEG, RS.number, Closest.Gene) %>%
@@ -30,7 +31,7 @@ b38_ckdgen <- result_ckdgen %>%
   right_join(bed38, by = c("CHR" = "Chr37", "BEG" = "Pos_b37")) %>%
   mutate(Chr38 = str_c("chr", Chr38))
 
-
+#------------#
 ld_varinats <- result_linkage %>%
   as_tibble() %>%
   select(CHR, POS1, POS2, R) %>%
@@ -50,7 +51,7 @@ ld_varinats <- result_linkage %>%
   mutate(locus = if_else(is.na(locus), locus_POS2, locus)) %>%
   select(- locus_POS2)
 
-
+#------------#
 # list of variants in strong LD with hits
 ld_varinats %>%
   mutate(SNP1 = str_c(CHR, "_", POS1),
@@ -59,7 +60,7 @@ ld_varinats %>%
   unlist() %>%
   unique() %>%
   sort()
-
+#------------#
 # create a variants file for extraction from VCF
 ld_varinats %>%
   select(CHR, POS1, POS2) %>%
@@ -67,18 +68,14 @@ ld_varinats %>%
   distinct(CHR, POS) %>%
   write.table("25-Nov-23_variants_in_ld.txt", sep = "\t", quote = F, row.names = F)
 
-
-ld_varinats %>%
-  #filter(POS1 == 10670853 | POS2 == 10670853)
-  #filter(locus == "SHROOM3")
-  count(locus)
-
+#------------#
 repSNPs_tmp %>% as_tibble() %>%
   # 0.05/(6337/2) = 1.578e-05
   filter(Pvalue_CHRIS <= 1.578e-5) %>%
   # 0.05/(6337) = 8.03471e-06
   #filter(Pvalue_CHRIS <= 7.890e-6) %>%
   count(Locus)
+
 
 # A tibble: 2 × 2
 # Locus       n
@@ -88,16 +85,4 @@ repSNPs_tmp %>% as_tibble() %>%
 # A tibble: 1 × 2
 # Locus       n
 # PIP5K1B    12
-
-
-intersect(unique(result_linkage$POS2), result_ckdgen$BEG)
-length(
-  unique(
-    intersect(unique(result_linkage$POS1),
-              unique(b38_ckdgen$Pos_b38)
-              )))
-
-# heatmap
-ggplot(result_linkage[1:100,], aes(POS1, POS2, color = R)) +
-  geom_tile()
-
+#------------#
