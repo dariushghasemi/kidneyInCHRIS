@@ -15,7 +15,7 @@ BASE.dir  <- "/home/dghasemisemeskandeh/projects/gwas"
 OUT.dir   <- paste0(BASE.dir, "/03_gwas_qc/outputs/")
 GWAS.file <- paste0(BASE.dir, "/Output/ReformedScheme/eGFRw.log.Res.txt.gz")
 OUT.mh    <- paste0(OUT.dir, today.date, "_MH_plot_eGFRw.log.Res_filtered.png")
-OUT.qq    <- paste0(OUT.dir, today.date, "_QQ_plot_eGFRw.log.Res_filtered_widen1.png")
+OUT.qq    <- paste0(OUT.dir, today.date, "_QQ_plot_eGFRw.log.Res_filtered.png")
 separator <- "\t"
 max.no.rows <- 2000600 #10000 #
 
@@ -24,18 +24,18 @@ max.no.rows <- 2000600 #10000 #
 # ----------------------------
 library(data.table)
 
-U <- fread(GWAS.file, header = TRUE, sep = separator, stringsAsFactors = F, nrows=max.no.rows) #
+U <- fread(GWAS.file, header = TRUE, sep = separator, stringsAsFactors = F) #, nrows=max.no.rows
 names(U) = c("chr","BEG","END","MARKER_ID","NS", "AC","CALLRATE","GENOCNT","MAF","STAT","PVALUE","BETA","SEBETA","R2") 
 
 # ----------------------------
-head(U)
-str(U)
+#str(U)
+
 # ----------------------------
 # Data Preparation
 # ----------------------------
-#names(U) [names(U)=="#CHROM"] <- "chr1"
+
 names(U) [names(U)=="BEG"] <- "position"
-#names(U) [names(U)=="PVALUE"] <- "P.value"
+
 
 # ----------------------------
 # Genomic-Control (GC) Correction
@@ -58,7 +58,7 @@ format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 
 # Generate GC corrected P-values and standard errors
 U$pval_gc <- pchisq(qchisq(U$PVALUE, df=1, lower.tail=F)/mylambda, df=1, lower.tail=F)
-#U$se_gc   <- U$StdErr*(mylambda^0.5)
+
 
 
 # ----------------------------------------------
@@ -130,8 +130,10 @@ QQplot_png <- function(p, png_file_name = "QQ_plot.png")
    dev.off()
 }
 
+
 #QQplot_png(U$PVALUE, OUT.qq) # original
 
+#----------------------------------------------#
 QQplot_png_org <- function(p, png_file_name = "QQ_plot.png")
 {
    obs <- -log(p,10)
@@ -158,19 +160,18 @@ QQplot_png_org <- function(p, png_file_name = "QQ_plot.png")
    
    ## plot confidence lines
    plot(null, lc95, ylim=c(0,MAX), xlim=c(0,max(null)), type="l", axes=FALSE, xlab="", ylab="")
-   par(new=T)
+   par(new=F, mar=c(9,9,0,0)+2, mgp=c(2.7,1.5,0))
    plot(null, lc05, ylim=c(0,MAX), xlim=c(0,max(null)), type="l", axes=FALSE, xlab="", ylab="")
    polygon(c(null,rev(null)), c(lc05, rev(lc95)), col="grey80", border="white")
    lines(c(0,max(null)),c(0, max(null)), lwd=2)
    
    ## add diagonal
-   par(new=T)#, mar=c(5,6,2,2)+2
+   par(new=T)
    
    ## add qqplot
-   qqplot(null,obs, ylim=c(0,MAX),xlim=c(0,max(null)), main="", pch=16, bg="grey20", xlab="", ylab="", cex=1, las=1, cex.axis=1.5, cex.lab=4.5)
-   legend("topleft", inset=.05, legend = GIF, cex = 2.5)
-   title(xlab=x.lab, mgp=c(4.5,1,0), line=4, cex.lab=2.5, font=2)
-   title(ylab=y.lab, mgp=c(4.5,5,0), line=6, cex.lab=2.5, font=2)
+   qqplot(null,obs, ylim=c(0,MAX),xlim=c(0,max(null)), main="", pch=16, bg="grey20", xlab="", ylab="", cex=1, las=1, cex.axis=2, font=2)
+   legend("topleft", inset=.05, legend = GIF, cex = 3)
+   title(xlab=x.lab, ylab=y.lab, line=6, cex.lab=3.5, font.lab=2)
 
    dev.off()
 }
@@ -180,10 +181,9 @@ QQplot_png_org(U$PVALUE, OUT.qq) # original
 # print time
 format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 
-quit()
-
-#------------- Manhattan plot PNG -------------
-
+#----------------------------------------------#
+#------       Manhattan plot PNG       --------
+#----------------------------------------------#
 MH_plot_PNG <- function(A, MH_file_name = "MH_plot.png", mytitle = "", color1 = "deeppink1", color2 = "deepskyblue1", pch.type = 16)
   {
     A <- A[order(A$chr, A$position),]
