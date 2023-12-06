@@ -1,7 +1,7 @@
 #!/usr/bin/Rscript
 
 
-# ----------------------------
+#-----------------------------------------------#
 # take the date and time
 format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 
@@ -9,7 +9,10 @@ format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 today.date <- format(Sys.Date(), "%d-%b-%y")
 print(paste("Today is: ", today.date))
 
-# ----------------------------
+#-----------------------------------------------#
+#-----       Relevant directories         ------
+#-----------------------------------------------#
+
 # User-defined variables
 BASE.dir  <- "/home/dghasemisemeskandeh/projects/gwas"
 OUT.dir   <- paste0(BASE.dir, "/03_gwas_qc/outputs/")
@@ -17,38 +20,49 @@ GWAS.file <- paste0(BASE.dir, "/Output/ReformedScheme/eGFRw.log.Res.txt.gz")
 OUT.mh    <- paste0(OUT.dir, today.date, "_MH_plot_eGFRw.log.Res_filtered.png")
 OUT.qq    <- paste0(OUT.dir, today.date, "_QQ_plot_eGFRw.log.Res_filtered.png")
 separator <- "\t"
-max.no.rows <- 2000600 #10000 #
+no.rows   <- 2000600 #10000 #arbitrary to be used for script test run
 
-# ----------------------------
-# File upload
-# ----------------------------
+
+#-----------------------------------------------#
+#-----          GWAS in CHRIS             ------
+#-----------------------------------------------#
+
+# NOTE:
+# GWAS results on the residuals of ln(eGFRcrea)
+# for 10,146 individuals using 10,158,101 variants
+# already filtered to have MAF>=0.005 via EPACTS
+# using TOPMed R2-imputed CHRIS 10K
+
+#------------#
 library(data.table)
 
-U <- fread(GWAS.file, header = TRUE, sep = separator, stringsAsFactors = F) #, nrows=max.no.rows
+# Read summary statistics of GWAS
+U <- fread(GWAS.file, header = TRUE, sep = separator, stringsAsFactors = F) #, nrows=no.rows
 names(U) = c("chr","BEG","END","MARKER_ID","NS", "AC","CALLRATE","GENOCNT","MAF","STAT","PVALUE","BETA","SEBETA","R2") 
 
-# ----------------------------
+
 #str(U)
 
-# ----------------------------
-# Data Preparation
-# ----------------------------
+#-----------------------------------------------#
+#-----         Data Preparation           ------
+#-----------------------------------------------#
 
 names(U) [names(U)=="BEG"] <- "position"
 
 
-# ----------------------------
-# Genomic-Control (GC) Correction
-# ----------------------------
+#-----------------------------------------------#
+#-----   Genomic-Control (GC) Correction   -----
+#-----------------------------------------------#
 
 # Function to estimate the GC factor lambda on the meta-analysis results
 gc_lambda1 <- function(p)
 {
-   # p = p-value vector
+   # p is p-value vector
    z <- qnorm(0.5 * p, mean=0.0, sd= 1.0, lower.tail=F)
    median(z * z, na.rm=TRUE) / qchisq(0.5, df=1, lower.tail=F)
 }
 
+#------------#
 # Lambda estimation
 mylambda <- gc_lambda1(U$PVALUE)
 GIF <- print(paste("Lambda =", round(mylambda, 3)))
@@ -60,12 +74,10 @@ format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 U$pval_gc <- pchisq(qchisq(U$PVALUE, df=1, lower.tail=F)/mylambda, df=1, lower.tail=F)
 
 
-
-# ----------------------------------------------
 # Graphical output
-# ----------------------------------------------
-
-#------------ QQ plot PNG -------------
+#-----------------------------------------------#
+#------          QQ plot PNG              ------
+#-----------------------------------------------#
 
 QQplot_png <- function(p, png_file_name = "QQ_plot.png")
 {
@@ -178,12 +190,16 @@ QQplot_png_org <- function(p, png_file_name = "QQ_plot.png")
 
 QQplot_png_org(U$PVALUE, OUT.qq) # original
 
+#------------#
 # print time
 format(Sys.time(), "%a %b %e %H:%M:%S %Y")
 
-#----------------------------------------------#
-#------       Manhattan plot PNG       --------
-#----------------------------------------------#
+
+
+#-----------------------------------------------#
+#------        Manhattan plot PNG       --------
+#-----------------------------------------------#
+
 MH_plot_PNG <- function(A, MH_file_name = "MH_plot.png", mytitle = "", color1 = "deeppink1", color2 = "deepskyblue1", pch.type = 16)
   {
     A <- A[order(A$chr, A$position),]
@@ -218,4 +234,5 @@ MH_plot_PNG <- function(A, MH_file_name = "MH_plot.png", mytitle = "", color1 = 
   
 #MH_plot_PNG(U, OUT.mh)
 
+#------------#
 ### sbatch --wrap 'Rscript 03-2_gwas_qc.R'  -c 4 --mem-per-cpu=8GB -J "03-2.R"

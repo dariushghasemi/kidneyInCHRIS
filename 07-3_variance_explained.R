@@ -13,7 +13,7 @@
 # using the formula used in CKDGen study
 
 # This script uses the results attained 
-# in `11-1_chris_vs_ckdgen.R` file: repSNPs_EA_Suppl2
+# in `07-1_chris_vs_ckdgen.R` file: repSNPs_EA_Suppl2
 
 # compute variance in CHRIS and in CKDGen
 repSNPs_EA_compar <- repSNPs_EA_Suppl2 %>%
@@ -48,17 +48,21 @@ repSNPs_EA_compar %>%
   geom_point(aes(color = `Locus replication`), size = 2) +
   geom_text(aes(label = locus_rep), color = "gray20", fontface = 4, vjust = 1.6) +
   scale_color_manual(values = c("steelblue2", "royalblue4")) +
-  labs(x = "Variance explained by lead variant in CHRIS",
-       y = "Variance explained by lead variant in CKDGen") +
+  scale_x_continuous(breaks = seq(0,0.0035, 0.0005)) +
+  scale_y_continuous(breaks = seq(0,0.0020, 0.0005)) +
+  labs(x = "\nVariance explained by each of 147 loci lead variants in CHRIS",
+       y = "Variance explained by each of 147 loci lead variants in CKDGen\n") +
+  ylim(0, 0.0020) +
   theme_classic() +
-  theme(legend.position = c(.9, .8),
+  theme(legend.position = c(.3, .95),
         legend.text  = element_text(size = 12),
         legend.title = element_text(size = 14, face = "bold"),
-        axis.text  = element_text(size = 8,  face = "bold"),
-        axis.title = element_text(size = 12, face = "bold"))
+        axis.text  = element_text(size = 11,  face = "bold"),
+        axis.title = element_text(size = 13, face = "bold"),
+        plot.margin = margin(l = 6, r = 6, t = 8, b = 6, unit = "mm"))
 
-ggsave("03-Dec-23_violin_plot_variance_explained_in_replicated_loci2.png", 
-       last_plot(), width = 8, height = 5.5, dpi = 300, units = "in")
+ggsave("05-Dec-23_violin_plot_variance_explained_in_147_loci_EA.png", 
+       last_plot(), width = 9, height = 6.5, dpi = 300, units = "in")
 
 #------------#
 # violin plot: variance explained in CHRIS vs. CKDGen

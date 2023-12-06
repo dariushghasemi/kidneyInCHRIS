@@ -8,10 +8,15 @@
 # The data here correspond TOPMedR2 imputed CHRIS10K.
 # The genomic build is GRCh38.
 
-#------------#
+#-----------------------------------------------------#
+#------     Variance explained in 147 loci      ------
+#-----------------------------------------------------#
+
 library(tidyverse)
 
-# read the dosage file of the variants in strong LD (r2 > 0.8)
+# Read the dosage file of the variants 
+# in strong LD (r2 > 0.8) generated in
+# `06-1-3_ld_variants_extraction.sh`
 inLD_variants <- read.delim("27-Nov-23_variants_in_ld_dosage.txt", header = T)
 
 #------------#
@@ -43,30 +48,40 @@ cumulative_var <- cumsum(inLD_PCA$sdev^2) / sum(inLD_PCA$sdev^2)
 
 # Create a data frame for ggplot
 expl_variance <- data.frame(Components = 1:length(cumulative_var),
-                           Cumulative_Variance = cumulative_var)
+                            Cumulative_Variance = cumulative_var)
 
 # save the variance (standard deviations^2) explained by PCs
 write.table(expl_variance,
-            "30-Nov-23_cumulative_variance_explained_by_each_pc.txt",
+            "06-Dec-23_cumulative_variance_explained_by_each_pc_147_loci.txt",
             quote = F, row.names = F)
 
 #------------#
 # Plot the cumulative variance explained using ggplot
-ggplot(expl_variance, aes(x = Components, y = Cumulative_Variance)) +
-  geom_line() +
-  geom_point(color = "steelblue", size = 2) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "gray50") +
-  geom_hline(yintercept = 0.99, linetype = "dashed", color = "red") +
-  scale_x_continuous(breaks = c(0, 200, 500, 1000, 2000, 4000, 6000)) +
-  scale_y_continuous(breaks = c(0, .25, .50, .75, .95, 0.99, 1)) +
-  labs(x = "Number of Components", y = "Cumulative Variance Explained") +
-  theme_classic() +
-  theme(axis.title  = element_text(face = "bold", size = 12),
-        axis.text.x = element_text(face = "bold"),
-        axis.text.y = element_text(face = "bold", size = 6))
+um_var_plot <- function(df){
+  
+  df %>%
+    mutate(color_code = if_else(Components == 147, "yes", "no")) %>% 
+    ggplot(aes(x = Components, y = Cumulative_Variance)) +
+    geom_line() +
+    geom_point(aes(color = color_code), size = 2, show.legend = F) +
+    #geom_hline(yintercept = 0.975, linetype = "dashed", color = "gray50") +
+    #geom_hline(yintercept = 0.99, linetype = "dashed", color = "red") +
+    #geom_vline(xintercept = 11,   linetype = "dashed", color = "purple") +
+    #scale_x_continuous(breaks = c(0, 200, 500, 1000, 2000, 4000, 6000)) +
+    scale_x_continuous(breaks = c(seq(0, 165, 15))) +
+    scale_y_continuous(breaks = c(seq(0, 1, .1)), limits = c(0, 1)) +
+    scale_color_manual(values = c("steelblue", "red2")) +
+    labs(x = "\nNumber of Principal Components",
+         y = "Cumulative Variance Explained\n") +
+
+    theme_classic() +
+    theme(axis.title  = element_text(face = "bold", size = 13),
+          axis.text.x = element_text(face = "bold", size = 10),
+          axis.text.y = element_text(face = "bold", size = 10))
+}
 
 # save the plot
-ggsave("30-Nov-23_No_of_pcs_explaining_total_varinace.png", 
+ggsave("06-Dec-23_No_of_pcs_explaining_total_varinace_147_loci.png", 
        last_plot(), width = 9, height = 7.5, dpi = 300, units = "in")
 
 #------------#
@@ -78,7 +93,48 @@ components_99 <- which(cumulative_var >= 0.99)[1]
 cat("Number of components for 95% variance:", components_95, "\n")
 cat("Number of components for 99% variance:", components_99, "\n")
 
+
+#-----------------------------------------------------#
+#------      Variance explained in 11 loci      ------
+#-----------------------------------------------------#
+
+# run PCA on dosage levels of the 163 
+# replicated variants fo 10146 individuals
+repSNPs_PCA <- prcomp(vcfReg[targets], scale. = T)
+
+# Calculate the cumulative variance explained by each component
+cum_var_repsnps <- cumsum(repSNPs_PCA$sdev^2) / sum(repSNPs_PCA$sdev^2)
+
+# Create a data frame for ggplot
+expl_var_repsnps <- data.frame(Components = 1:length(cum_var_repsnps),
+                               Cumulative_Variance = cum_var_repsnps) 
+
+# save the variance (standard deviations^2) explained by PCs
+write.csv(expl_var_repsnps,
+          "05-Dec-23_cumulative_variance_explained_by_each_pcs_163_repsnps.csv",
+          quote = F, row.names = F)
+
 #------------#
-# sbatch --wrap 'Rscript 05-4_pca_in-LD_variants.R'  -c 4 --mem-per-cpu=8GB -J "05-4.R"
+# PCs explaining variability across 163 replicated variants
+fviz_eig(repSNPs_PCA, addlabels = F, ncp = 40) +
+  scale_y_continuous(breaks = seq(0, 55, 5)) +
+  theme_classic() +
+  theme(title = element_blank(),
+        axis.title = element_text(face = "bold", size = 12))
+
+
+ggsave("05-Dec-23_pcs_vs_percentage_of_explained_varinace_163_repsnps.png", 
+       last_plot(), width = 12, height = 5.5, dpi = 300, units = "in")
+
+#------------#
+# cumulative variance plot
+expl_var_repsnps %>% um_var_plot()
+
+# save the plot
+ggsave("05-Dec-23_No_of_pcs_explaining_total_variance_163_resnps.png", 
+       last_plot(), width = 9, height = 7.5, dpi = 300, units = "in")
+
+#------------#
+# sbatch --wrap 'Rscript 06-1-4_ld_variants_pca.R'  -c 4 --mem-per-cpu=8GB -J "06-1-4.R"
 
 
