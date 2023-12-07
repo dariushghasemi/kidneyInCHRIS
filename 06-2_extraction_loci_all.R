@@ -72,9 +72,10 @@ meta_loci <- metaB37 %>%
    merge(., POS, by.x = c("Chr37", "Pos_b37"), all = FALSE) %>%
    select(- Chr37) %>%
    # Making column names consistant for merge with GWAS in CHRIS
-   rename(CHR = as.integer(Chr38), POS37 = Pos_b37, POS38 = Pos_b38) %>%
+   rename(CHR = Chr38, POS37 = Pos_b37, POS38 = Pos_b38) %>%
    # Adding locus name to meta-gwas
    inner_join(loci_147 %>% select("RSID", "Closest.Gene"), by = "RSID") %>%
+   mutate(CHR = as.integer(CHR)) %>%
    # Extracting 147 CKDGen Loci from CHRIS GWAS
    left_join(gwas, by = c("CHR", "POS38")) %>%
    # indicate if a locus is replicated in CHRIS
