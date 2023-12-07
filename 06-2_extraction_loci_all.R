@@ -70,17 +70,21 @@ cat("\n\nExtracting 147 loci from subtracted CKDGen Meta-GWAS...\n\n")
 meta_loci <- metaB37 %>%
    # Adding POS38 to subtracted Meta-GWAS
    merge(., POS, by.x = c("Chr37", "Pos_b37"), all = FALSE) %>%
+   # drop unnecessary columns
    select(- Chr37) %>%
    # Making column names consistant for merge with GWAS in CHRIS
    rename(CHR = Chr38, POS37 = Pos_b37, POS38 = Pos_b38) %>%
    # Adding locus name to meta-gwas
    inner_join(loci_147 %>% select("RSID", "Closest.Gene"), by = "RSID") %>%
+   # change class from character to integer for merge
    mutate(CHR = as.integer(CHR)) %>%
    # Extracting 147 CKDGen Loci from CHRIS GWAS
    left_join(gwas, by = c("CHR", "POS38")) %>%
    # indicate if a locus is replicated in CHRIS
    mutate(status_CHRIS = if_else(Pvalue_CHRIS  < 6.8e-4, "Sig", "Non-Sig")) %>%
+   # relocate columns
    select(CHR, POS37, POS38, RSID, Closest.Gene, everything()) %>%
+   # sort results based on chrom and positions
    arrange(CHR, POS38)
 
 
