@@ -5,7 +5,7 @@
 # Started on October 2021
 # Last update on January 2023 
 
-
+#------------#
 
 library(data.table)
 library(readxl)
@@ -18,18 +18,28 @@ library(tidyverse)
 #----------        template result         -----------
 #-----------------------------------------------------#
 
+# input files directories
+base.dir <- "F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables"
+egfr_log_std <- paste0(base.dir, "/Replication_eGFRw.log.Res_MultiA/Template_results_211012_eGFR.log.std.xlsx")
+egfr_log_res <- paste0(base.dir, "/Replication_eGFRw.log.Res_MultiA/Meta_replicatedSNPs_eGFRw.log.Res.all.txt")
+egfr_log_res_MA <- paste0(base.dir, "/Replication_eGFRw.log.Res_MultiA/ReplicatedSNPs by eGFRw.log.Res.csv")
+egfr_log_res_EA <- paste0(base.dir, "/Replication_eGFRw.log.Res_EUR_A/10-Jan-23_replicatedSNPs_eGFRw.log.Res.txt")
+ckdgen_EA    <- paste0(base.dir, "/Replication_eGFRw.log.Res_EUR_A/31-Dec-22_Replication_of_147_EA_Loci_in_CHRIS.txt")
+ckdgen_MA    <- paste0(base.dir, "/Replication_eGFRw.log.Res_MultiA/07-Dec-23_Replication_of_147_Trans-A_loci_in_CHRIS.txt")
+
+#------------#
 # Reading the initial replication analysis results on ln(eGFRcrea)
-tempResult0 <- read_excel("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_MultiA/Template_results_211012_eGFR.log.std.xlsx", sheet = 2, na = "NA")#skip = 1, [-1, ]
+tempResult0 <- read_excel(egfr_log_std, sheet = 2, na = "NA")#skip = 1, [-1, ]
 
 # Reading the first replication analysis results on the residuals of ln(eGFRcrea) made by indirect method
-tempResult1 <- read.table("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_MultiA/Meta_replicatedSNPs_eGFRw.log.Res.all.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+tempResult1 <- read.table(egfr_log_res, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
 # adding the locus name to replication results 
 tempResult  <- merge(tempResult0[,c("CHR", "BEG", "Locus")],
                      tempResult1, by = c("CHR", "BEG"), all.y = TRUE)
 
-tempResult1 <- as.data.frame(tempResult1)
 tempResult$Locus <- as.factor(tempResult$Locus)
+tempResult1 <- as.data.frame(tempResult1)
 
 # missing SNPs
 mergedSupTable <- read.delim("E://Dariush//PhD//Analysis//mergedtable_hg19_SerumCreatLog.txt", header= TRUE, sep = "\t")
@@ -37,26 +47,23 @@ mergedSupTable <- read.delim("E://Dariush//PhD//Analysis//mergedtable_hg19_Serum
 missedSNPs <- setdiff(Supptable$BEG, mergedSupTable$BEG)
 Supptable[Supptable$BEG == missedSNPs, c("chr","BEG")]
 
-#-----------------------------------------------------#
-# 147 CKDGen Loci
-repSNPs_EA <- read.csv("F:/Dariush/PhD/Analysis/1st Paper/Outputs_tables/Replication_eGFRw.log.Res_EUR_A/31-Dec-22_Replication_of_147_EA_Loci_in_CHRIS.txt", sep = '\t')
+#------------#
+# 147 CKDGen Loci European Ancestry
+repSNPs_EA <- read.csv(ckdgen_EA, sep = '\t')
+
+# 147 CKDGen Loci Multi Ancestries
+repSNPs_MA <- read.delim(ckdgen_MA, sep = '\t')
 
 # replication analysis results: 162 SNPs (Multi-Ancestry)
-repSNPs_old <- read.csv("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/ReplicatedSNPs by eGFRw.log.Res.csv",
-                        stringsAsFactors = FALSE)
+repSNPs_old <- read.csv(egfr_log_res_MA, stringsAsFactors = FALSE)
 
 # replication analysis results: 163 SNPs (European Ancestry) - including GWAS hit at PDILT locus
-repSNPs_tmp <- read.table("F:/Dariush/PhD/Analysis//1st Paper/Outputs_tables/Replication_eGFRw.log.Res_EUR_A/10-Jan-23_replicatedSNPs_eGFRw.log.Res.txt",
-                          header = T, stringsAsFactors = FALSE)
+repSNPs_tmp <- read.table(egfr_log_res_EA, header = T, stringsAsFactors = FALSE)
 
-#-----------------------------------------------------#
-#CHRIS
+#------------#
+# CHRIS
 #str_extract(tempResult$MARKER_ID.log.Std, "[A-Z]:[A-Z]")
 
-#------- changing the signs of positive alleles to negative effect -------
-propVars <- c("Effect.ckdgen",
-              "Effect.CHRIS",
-              "CHRIS.CKDGen.Effect.Ratio")
 
 #-----------------------------------------------------#
 #-------      Concordant Effect Allele        --------
@@ -66,8 +73,7 @@ propVars <- c("Effect.ckdgen",
 # of the positive effect allele in both studies to have
 # negative effect for consistency in one single operation
 
-repSNPs <- 
-  repSNPs_tmp %>%
+repSNPs <- repSNPs_tmp %>%
   rename(EA_CKDGen_disc  = EA_CKDGen,
          RA_CKDGen_disc  = RA_CKDGen,
          EAF_CKDGen_disc = EAF_CKDGen,
@@ -140,52 +146,71 @@ repSNPs %>%
          Pvalue_CHRIS_1s = Pvalue_CHRIS/2) %>%
   select(Locus, RSID, SNPid, EA_OA,
          EAF_CKDGen, Beta_CKDGen_ald, SE_CKDGen, Pvalue_CKDGen,
-         EAF_CHRIS,  Beta_CHRIS_ald,  SE_CHRIS,  Pvalue_CHRIS,  Pvalue_CHRIS_1s) %>% #View()
+         EAF_CHRIS,  Beta_CHRIS_ald,  SE_CHRIS,  Pvalue_CHRIS,  Pvalue_CHRIS_1s) %>%
   write.csv("19-Jan-23_Suppl. Table 3_163 replicated SNPs in CHRIS.csv", row.names = F, quote = F)
-  
-  
   
 
 #------------#
-# Supplementary table 2: 147 Loci in CKDGen and CHRIS
+# Align alleles and association direction in CHRIA & CKDGen
+concordinating_alleles <- function(df) {
+  
+  df %>%
+    as_tibble() %>%
+    arrange(CHR, POS38) %>%
+    rename(EA_CKDGen_disc  = EA_CKDGen,
+           RA_CKDGen_disc  = RA_CKDGen,
+           #EAF_CKDGen_disc = EAF_CKDGen,
+           MAF_CHRIS_disc  = MAF_CHRIS,
+           Locus           = Closest.Gene,
+           n_CKDGen        = n_total_sum_CKDGen) %>%
+    mutate(SNPid           = str_c(CHR, ":", POS38),                                                      #CHR:POS
+           RA_CHRIS_disc   = as.character(noquote(str_split(MARKER_ID_CHRIS, "\\W", simplify = T)[,5])),  #Reference allele
+           EA_CHRIS_disc   = as.character(noquote(str_split(MARKER_ID_CHRIS, "\\W", simplify = T)[,6])),  #Effect allele
+           EAF_CHRIS_disc  = round(AC_CHRIS / (NS_CHRIS * 2), 5),                                         #Computing CHRIS effect allele frequency
+           Beta_CHRIS_tmp  = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, (-1) * Beta_CHRIS, Beta_CHRIS),      #Changing CHRIS effect size
+           EA_CHRIS_tmp    = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, RA_CHRIS_disc, EA_CHRIS_disc),       #Changing CHRIS reference allele
+           RA_CHRIS_tmp    = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, EA_CHRIS_disc, RA_CHRIS_disc),       #Changing CHRIS effect allele
+           EAF_CHRIS       = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, 1 - EAF_CHRIS_disc, EAF_CHRIS_disc), #Correcting EAF
+           Check_EA        = ifelse(EA_CKDGen_disc == EA_CHRIS_tmp, "Yes", "No"),                         #Check if the effect alleles are concordant
+           EA              = ifelse(EA_CKDGen_disc == EA_CHRIS_tmp, EA_CKDGen_disc, NA),                  #Extracting the concordant effect allele
+           OA              = ifelse(RA_CKDGen_disc == RA_CHRIS_tmp, RA_CKDGen_disc, NA),                  #Extracting the concordant reference allele
+           Check_Beta      = case_when(Beta_CKDGen > 0 & Beta_CHRIS_tmp > 0 ~ "Yes_Pos",                  #Check if association signs are in one direction
+                                       Beta_CKDGen < 0 & Beta_CHRIS_tmp < 0 ~ "Yes_Neg"),
+           Pvalue_CHRIS_1s = case_when(Check_Beta == "Yes_Pos" | Check_Beta == "Yes_Neg" ~ Pvalue_CHRIS/2,#Compute 1-sided P-value for concordant alleles
+                                       is.na(Check_Beta) ~ 1-(Pvalue_CHRIS/2)),                           #Compute complementary 1-sided P-value for discordant alleles
+           EA_OA           = paste0(EA_CKDGen_disc, "/", RA_CKDGen_disc),                                 #Compute consistent EA/OA in bothe studies
+           Beta_SE_CKDGen  = paste0(Beta_CKDGen, '(', round(SE_CKDGen,6), ')'),                           #Compute b(SE) in CKDGen
+           Beta_SE_CHRIS   = paste0(Beta_CHRIS_tmp,  '(', round(SE_CHRIS, 6), ')')) %>%                   #Compute b(SE) in CHRIS
+    select(Locus, RSID, SNPid, EA_OA,
+           #EA_CKDGen_disc, RA_CKDGen_disc, EA_CHRIS_tmp, RA_CHRIS_tmp, Check_EA, EA, OA, EA_OA,
+           EAF_CKDGen, Beta_CKDGen,    SE_CKDGen, Pvalue_CKDGen, n_CKDGen,
+           EAF_CHRIS,  Beta_CHRIS_tmp, SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s)
+}
 
+#------------#
+# Supplementary table 2: 147 Loci in CKDGen EA and CHRIS
+
+# CHRIS merged with CKDGen EA
 repSNPs_EA_Suppl2 <- repSNPs_EA %>%
-  rename(EA_CKDGen_disc  = EA_CKDGen,
-         RA_CKDGen_disc  = RA_CKDGen,
-         #EAF_CKDGen_disc = EAF_CKDGen,
-         MAF_CHRIS_disc  = MAF_CHRIS,
-         Locus           = Closest.Gene) %>%
-  mutate(SNPid           = str_c(CHR, ":", POS38),                                                      #CHR:POS
-         RA_CHRIS_disc   = as.character(noquote(str_split(MARKER_ID_CHRIS, "\\W", simplify = T)[,5])),  #Reference allele
-         EA_CHRIS_disc   = as.character(noquote(str_split(MARKER_ID_CHRIS, "\\W", simplify = T)[,6])),  #Effect allele
-         EAF_CHRIS_disc  = round(AC_CHRIS / (NS_CHRIS * 2), 5),                                         #Computing CHRIS effect allele frequency
-         Beta_CHRIS_tmp  = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, (-1) * Beta_CHRIS, Beta_CHRIS),      #Changing CHRIS effect size
-         EA_CHRIS_tmp    = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, RA_CHRIS_disc, EA_CHRIS_disc),       #Changing CHRIS reference allele
-         RA_CHRIS_tmp    = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, EA_CHRIS_disc, RA_CHRIS_disc),       #Changing CHRIS effect allele
-         EAF_CHRIS       = ifelse(EA_CKDGen_disc != EA_CHRIS_disc, 1 - EAF_CHRIS_disc, EAF_CHRIS_disc), #Correcting EAF
-         Check_EA        = ifelse(EA_CKDGen_disc == EA_CHRIS_tmp, "Yes", "No"),                         #Check if the effect alleles are concordant
-         EA              = ifelse(EA_CKDGen_disc == EA_CHRIS_tmp, EA_CKDGen_disc, NA),                  #Extracting the concordant effect allele
-         OA              = ifelse(RA_CKDGen_disc == RA_CHRIS_tmp, RA_CKDGen_disc, NA),                  #Extracting the concordant reference allele
-         Check_Beta      = case_when(Beta_CKDGen > 0 & Beta_CHRIS_tmp > 0 ~ "Yes_Pos",                  #Check if association signs are in one direction
-                                     Beta_CKDGen < 0 & Beta_CHRIS_tmp < 0 ~ "Yes_Neg"),
-         Pvalue_CHRIS_1s = case_when(Check_Beta == "Yes_Pos" | Check_Beta == "Yes_Neg" ~ Pvalue_CHRIS/2,#Compute 1-sided P-value for concordant alleles
-                                     is.na(Check_Beta) ~ 1-(Pvalue_CHRIS/2)),                           #Compute complementary 1-sided P-value for discordant alleles
-         EA_OA           = paste0(EA_CKDGen_disc, "/", RA_CKDGen_disc),                                 #Compute consistent EA/OA in bothe studies
-         Beta_SE_CKDGen  = paste0(Beta_CKDGen, '(', round(SE_CKDGen,6), ')'),                           #Compute b(SE) in CKDGen
-         Beta_SE_CHRIS   = paste0(Beta_CHRIS_tmp,  '(', round(SE_CHRIS, 6), ')')) %>%                   #Compute b(SE) in CHRIS
-  select(Locus, RSID, SNPid, EA_OA,
-         #EA_CKDGen_disc, RA_CKDGen_disc, EA_CHRIS_tmp, RA_CHRIS_tmp, Check_EA, EA, OA, EA_OA,
-         EAF_CKDGen, Beta_CKDGen,    SE_CKDGen, Pvalue_CKDGen,
-         EAF_CHRIS,  Beta_CHRIS_tmp, SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) #%>% View
-  #write.csv("19-Jan-23_Suppl. Table 2_147 CKDGen Loci.csv", row.names = FALSE)
+  concordinating_alleles() %>%
+  rename_with(~paste0(.x, "_EA"), ends_with("CKDGen"))
+
+#write.csv(repSNPs_EA_Suppl2, "19-Jan-23_Suppl. Table 2_147 CKDGen Loci.csv", row.names = FALSE)
+
+# merging CKDGen EA-merged CHRIS with CKDGen Trans-Ancestry
+repSNPs_MA %>%
+  concordinating_alleles() %>%
+  rename_with(~paste0(.x, "_MA"), ends_with("CKDGen")) %>%
+  inner_join(repSNPs_EA_Suppl2) %>%
+  select(Locus, RSID, SNPid, EA_OA, ends_with("CKDGen_MA"), ends_with("CKDGen_EA"), contains("CHRIS")) %>%
+  write.csv("07-Dec-23_Suppl._Table2_147_CKDGen_Loci.csv", row.names = FALSE)
 
 #------------#
 # Alt+- is a shortcut for <-
 #------------#
 # Subsetting the leading or most significant SNPs
 
-tagSNPs <- 
-  repSNPs %>%
+tagSNPs <- repSNPs %>%
   select(SNPid, Locus, RSID, 
          Beta_CKDGen_ald, Pvalue_CKDGen,
          Beta_CHRIS_ald,  Pvalue_CHRIS) %>%
@@ -209,8 +234,11 @@ repSNPs %>%
          EAF_CHRIS,  Beta_SE_CHRIS,  Pvalue_CHRIS, Pvalue_CHRIS_1s) %>%
   # Find the smallest and the largest p-values among the loci
   #top_n(n = -1, wt = Pvalue_CHRIS_1s) %>% View
-  write.csv("10-Jan-23_Table 2_Leading SNPs of the replicated loci.csv", row.names = FALSE) #"10-Jan-23_Supp Table 3_162 Replicated SNPs.csv"
-  
+  write.csv("10-Jan-23_Table 2_Leading SNPs of the replicated loci.csv", 
+            #"10-Jan-23_Supp Table 3_162 Replicated SNPs.csv"
+            row.names = FALSE)
+
+
 #-----------------------------------------------------#
 #-------       Testing the correlations       --------
 #-----------------------------------------------------#
@@ -219,6 +247,11 @@ cor.test(repSNPs$MAF.Diff,
          repSNPs$Effect.CHRIS - repSNPs$Effect.ckdgen,
          use = "complete.obs")
 
+# changing the signs of positive alleles to negative effect
+propVars <- c("Effect.ckdgen",
+              "Effect.CHRIS",
+              "CHRIS.CKDGen.Effect.Ratio")
+
 cor(repSNPs[c("MAF.Diff", "Effect.CHRIS", "Effect.ckdgen")], 
     use = "complete.obs")
 
@@ -226,8 +259,7 @@ cor(repSNPs[c("MAF.Diff", "Effect.CHRIS", "Effect.ckdgen")],
 library(ggcorrplot)
 
 #Select MAF and effect size columns
-cor_data <- 
-  repSNPs %>% 
+cor_data <- repSNPs %>% 
   select(#Locus,
     MAF_CHRIS, MAF_CKDGen, MAF_Diff, MAF_Ratio,
     Beta_CHRIS_ald, Beta_CKDGen_ald, Beta_Diff, Beta_Ratio) %>% 

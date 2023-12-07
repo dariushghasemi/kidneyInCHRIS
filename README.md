@@ -154,12 +154,17 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - The scripts written to be used for running GWAS on ln(eGFRcrea) and doing replication study in the CHRIS study were added to Github (Sat, 23:55, 02-Dec-23).
 
-- The variance explained by the 147 GWAS hits were quantified and compared in both CHRIS and CKDGen. The quantities were illustrated in proper charts via `07-2_variance_explained.R` (Sun, 19:35, 03-Dec-23). 
+- The variance explained by the 147 GWAS hits were quantified and compared in both CHRIS and CKDGen. The quantities were illustrated in proper charts via `07-3_variance_explained.R` (Sun, 19:35, 03-Dec-23). 
 
 - Unnecessary scripts like `CHRIS.R` were removed from git repository and stored in local computer (Sun, 23:35, 03-Dec-23). 
 
-- Script orders corrected again. The script to genrate the qq-plot have been stored to be sent to the Reviewer (Mon, 13:40, 01-Dec-23).
+- Scripts order were corrected again. The script to generate the qq-plot have been stored to be sent to the Reviewer (Mon, 13:40, 04-Dec-23).
 
+- The amount the variance explained (97.5%) by the first 147 principal components were plotted for supple. files using `07-3_variance_explained.R`(Tue, 05-Dec-23).
+
+- Replication workflow deposited in `06-2_extraction_loci_all.R` and `06-3_extraction_loci_replicated.R` was rephrase in tidyverse style for its reproducibility and DRY manner (Thu, 04:30, 07-Dec-23).
+
+- Trans-ethnic CKDGen meta-GWAS analysis after excluding CHRIS 5K was added to the supple. Table 2. (Thu, 18:25, 07-Dec-23).
 
 Dariush
 
