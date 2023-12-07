@@ -34,12 +34,12 @@ inLD_PCA <- prcomp(inLD_wide %>% select(- AID), scale. = T)
 #install.packages("factoextra")
 library(factoextra)
 
-plot_pca <- fviz_eig(inLD_PCA, addlabels = F, ncp = 250, ylim = c(0, 15)) +
+plot_pca <- fviz_eig(inLD_PCA, addlabels = F, ncp = 40, ylim = c(0, 15)) +
   scale_y_continuous(breaks = seq(0, 15, 1)) +
   theme_classic() +
   theme(title = element_blank())
 
-ggsave("30-Nov-23_pcs_vs_total_varinace_explained.png", 
+ggsave("06-Dec-23_pcs_vs_total_varinace_explained.png", 
        plot_pca, width = 12, height = 5.5, dpi = 300, units = "in")
 
 #------------#
@@ -60,25 +60,27 @@ write.table(expl_variance,
 um_var_plot <- function(df){
   
   df %>%
-    mutate(color_code = if_else(Components == 147, "yes", "no")) %>% 
     ggplot(aes(x = Components, y = Cumulative_Variance)) +
     geom_line() +
-    geom_point(aes(color = color_code), size = 2, show.legend = F) +
-    #geom_hline(yintercept = 0.975, linetype = "dashed", color = "gray50") +
+    geom_point(color = "steelblue", size = 2) +
+    geom_point(aes(x = 147, y = .98), color = "red2", size = 2.5) +
     #geom_hline(yintercept = 0.99, linetype = "dashed", color = "red") +
     #geom_vline(xintercept = 11,   linetype = "dashed", color = "purple") +
-    #scale_x_continuous(breaks = c(0, 200, 500, 1000, 2000, 4000, 6000)) +
-    scale_x_continuous(breaks = c(seq(0, 165, 15))) +
-    scale_y_continuous(breaks = c(seq(0, 1, .1)), limits = c(0, 1)) +
-    scale_color_manual(values = c("steelblue", "red2")) +
+    scale_x_continuous(breaks = c(0, 200, 500, 1000, 2000, 4000, 6000), limits = c(0, 6500)) +
+    #scale_x_continuous(breaks = seq(0, 165, 15), limits = c(0, 165)) +
+    scale_y_continuous(breaks = seq(0, 1, .1), limits = c(0, 1)) +
+    scale_color_manual(values = c(NA, "red2")) +
     labs(x = "\nNumber of Principal Components",
          y = "Cumulative Variance Explained\n") +
-
     theme_classic() +
     theme(axis.title  = element_text(face = "bold", size = 13),
           axis.text.x = element_text(face = "bold", size = 10),
           axis.text.y = element_text(face = "bold", size = 10))
 }
+
+#------------#
+# cumulative variance plot
+expl_variance %>% um_var_plot()
 
 # save the plot
 ggsave("06-Dec-23_No_of_pcs_explaining_total_varinace_147_loci.png", 
@@ -93,7 +95,7 @@ components_99 <- which(cumulative_var >= 0.99)[1]
 cat("Number of components for 95% variance:", components_95, "\n")
 cat("Number of components for 99% variance:", components_99, "\n")
 
-
+quit()
 #-----------------------------------------------------#
 #------      Variance explained in 11 loci      ------
 #-----------------------------------------------------#
