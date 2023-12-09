@@ -8,14 +8,14 @@
 
 
 #-----------------------------------------------------#
-#------      Figure 3: MAF vs Effect ratio     -------
+#------    Figure 3A: MAF vs. Effect Ratio     -------
 #-----------------------------------------------------#
 
 library(ggfittext)
 
 #-------------#
 # Beta ratio vs. MAF ratio in CKDGen and CHRIS 
-repSNPs %>% 
+fig_3b <- repSNPs %>% 
   ggplot(aes(x = MAF_Ratio, y = Beta_Ratio, shape = Locus, color = Locus)) + 
   geom_point(alpha = 0.9, size = 3.5) +
   #ggrepel::geom_text_repel(data = tagSNPs, aes(label = Locus), check_overlap = TRUE) +
@@ -44,14 +44,14 @@ repSNPs %>%
   # annotate("text", x = 0.65, y = 3, size = 4, label = "DDX1") +
   # annotate("text", x = 1.15, y = 4, size = 4, label = "IGF1R") +
   # annotate("text", x = 1.2, y = 2.8, size = 4, label = "PIPK1B") +
-  labs(x = "CHRIS-to-CKDGen MAF ratio", 
-       y = "CHRIS-to-CKDGen effect ratio") + 
+  labs(x = "\nCHRIS-to-CKDGen MAF ratio\n", 
+       y = "CHRIS-to-CKDGen effect ratio\n") + 
   #theme_minimal()+ #theme_light(base_size = 10)+ #lims(y = c(1, 6)) +
   theme(panel.background = element_rect(fill = "white"),
         panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
         panel.grid.major.x = element_blank(),
-        axis.text  = element_text(size = 8,  face = "bold"),
-        axis.title = element_text(size = 12, face = "bold"),
+        axis.text  = element_text(size = 11,  face = "bold"),
+        axis.title = element_text(size = 13, face = "bold"),
         #legend.position = "none",
         legend.key.size  = unit(0.99, 'cm'),
         legend.key.width = unit(0.7, 'cm'),

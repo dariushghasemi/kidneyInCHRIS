@@ -5,7 +5,7 @@
 # Created on December 2023
 
 #-----------------------------------------------------#
-# ---------------- Variance explained ----------------
+#-------         Variance explained           --------
 #-----------------------------------------------------#
 
 # response to the comment of the Reviewer 1
@@ -17,8 +17,8 @@
 
 # compute variance in CHRIS and in CKDGen
 repSNPs_EA_compar <- repSNPs_EA_Suppl2 %>%
-  mutate(var_CHRIS  = (Beta_CHRIS_tmp ^ 2) * ((2 * EAF_CHRIS *(1 - EAF_CHRIS)) / 0.016),
-         var_CKDGen = (Beta_CKDGen ^ 2)    * ((2 * EAF_CKDGen*(1 - EAF_CKDGen))/ 0.016)) 
+  mutate(var_CHRIS  = (Beta_CHRIS_tmp ^ 2) * ((2*EAF_CHRIS *(1 - EAF_CHRIS)) / 0.016),
+         var_CKDGen = (Beta_CKDGen_EA ^ 2) * ((2*EAF_CKDGen_EA *(1 - EAF_CKDGen_EA))/ 0.016)) 
 
 #------------#
 # variance explained by each variant
@@ -36,8 +36,8 @@ ggsave("03-Dec-23_violin_plot_variance_explained_in_CHRIS_vs_CKDGen.png",
        last_plot(), width = 8, height = 5.5, dpi = 300, units = "in")
 
 #------------#
-# replicated vs. not-replicated loci 
-repSNPs_EA_compar %>%
+# Fig. 3A: variance of replicated vs. not-replicated loci 
+fig_3a <- repSNPs_EA_compar %>%
   mutate(`Locus replication` = if_else(Locus %in% unique(repSNPs_tmp$Locus),
                                        "Replicated", "Not-Replicated"),
          locus_rep = if_else(Locus %in% unique(repSNPs_tmp$Locus), Locus, "")) %>%
@@ -46,12 +46,13 @@ repSNPs_EA_compar %>%
   geom_hline(yintercept = 0, color = "gray40", lty = 2)+
   geom_vline(xintercept = 0, color = "gray40", lty = 2)+
   geom_point(aes(color = `Locus replication`), size = 2) +
-  geom_text(aes(label = locus_rep), color = "gray20", fontface = 4, vjust = 1.6) +
+  geom_text(aes(label = locus_rep), color = "gray20", fontface = 3, vjust = 1.6) +
+  #ggrepel::geom_text_repel(aes(label = locus_rep),  check_overlap = TRUE) +
   scale_color_manual(values = c("steelblue2", "royalblue4")) +
-  scale_x_continuous(breaks = seq(0,0.0035, 0.0005)) +
+  scale_x_continuous(breaks = seq(0,0.0035, 0.0005), limits = c(0,0.0034)) +
   scale_y_continuous(breaks = seq(0,0.0020, 0.0005)) +
-  labs(x = "\nVariance explained by each of 147 loci lead variants in CHRIS",
-       y = "Variance explained by each of 147 loci lead variants in CKDGen\n") +
+  labs(x = "\nVariance explained by lead variants at 147 loci in CHRIS",
+       y = "Variance explained by lead variants at 147 loci in CKDGen\n") +
   ylim(0, 0.0020) +
   theme_classic() +
   theme(legend.position = c(.3, .95),
@@ -63,6 +64,17 @@ repSNPs_EA_compar %>%
 
 ggsave("05-Dec-23_violin_plot_variance_explained_in_147_loci_EA.png", 
        last_plot(), width = 9, height = 6.5, dpi = 300, units = "in")
+
+#-----------------------------------------------------#
+#-------            Figure 3 A&B              --------
+#-----------------------------------------------------#
+
+cowplot::plot_grid(fig_3a, fig_3b, labels = c("A", "B"), ncol = 1, nrow = 2)
+
+
+ggsave("09-Dec-23_paper_revised_figure_3_chris_vs_ckdgen_hor.png",
+       width = 9.5, height = 15, dpi = 400, units = "in")
+
 
 #------------#
 # violin plot: variance explained in CHRIS vs. CKDGen
