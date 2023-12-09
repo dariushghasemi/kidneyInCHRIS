@@ -176,5 +176,7 @@ OUTPUT="~/projects/gwas/06_replication_analysis/output/09-Dec-23_chris_11_rep_lo
 zgrep -E 'rs74748843|rs807624$|rs28817415|rs10062079|rs3812036|rs57514204|rs819196|rs2039424|rs7113042|rs59646751|rs77924615' $CKDGen_TA > $OUTPUT
 ```
 
+- I got sick, probably covid-19 infection and couldn't work on the shroom3 draft paper. (Sat, 20:55, 09-Dec-23) 
+
 Dariush
 
