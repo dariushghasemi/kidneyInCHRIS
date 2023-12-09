@@ -160,11 +160,21 @@ log(eGFR) ~ SNP +FT4 + Sex + Age vs. log(eGFR) ~ SNP +FT4 + Sex + Age + Municipa
 
 - Scripts order were corrected again. The script to generate the qq-plot have been stored to be sent to the Reviewer (Mon, 13:40, 04-Dec-23).
 
-- The amount the variance explained (97.5%) by the first 147 principal components were plotted for supple. files using `07-3_variance_explained.R`(Tue, 05-Dec-23).
+- The amount the variance explained (97.5%) by the first 147 principal components were plotted as supplementary figure S1 using `06-1-4_ld_variants_pca.R` (Tue, 05-Dec-23).
 
 - Replication workflow deposited in `06-2_extraction_loci_all.R` and `06-3_extraction_loci_replicated.R` was rephrase in tidyverse style for its reproducibility and DRY manner (Thu, 04:30, 07-Dec-23).
 
 - Trans-ethnic CKDGen meta-GWAS analysis after excluding CHRIS 5K was added to the supple. Table 2. (Thu, 18:25, 07-Dec-23).
+
+- The plot showing variants' effect in CKDGen vs. CHRIS (Fig 3B) made via `07-2_chris_vs_ckdgen_plots.R` was merged with the newly drawn plot showing variance explained by each of the lead variants at 147 kidney loci (Fig. 3A) made here `07-3_variance_explained.R`; now it is Fig. 3 of the revised paper (Sat, 03:34, 09-Dec-23).
+
+- The 11 hits in paper Table 2 resulted from subtracting CHRIS 5K from CKDGen trans-ethnic meta-GWAS was saved below - rs-numbers were extracted from Table 2 of the revised paper (Sat, 04:04, 09-Dec-23).
+```bash
+CKDGen_TA="~/projects/gwas/01_subtract_ckdgen/output/meta.results_corrected.with.MetaSubtract.txt.gz"
+OUTPUT="~/projects/gwas/06_replication_analysis/output/09-Dec-23_chris_11_rep_loci_in_subtracted_ckdgen_trans-ethnic.txt"
+
+zgrep -E 'rs74748843|rs807624$|rs28817415|rs10062079|rs3812036|rs57514204|rs819196|rs2039424|rs7113042|rs59646751|rs77924615' $CKDGen_TA > $OUTPUT
+```
 
 Dariush
 
