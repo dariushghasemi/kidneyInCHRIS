@@ -38,32 +38,35 @@ ggsave("03-Dec-23_violin_plot_variance_explained_in_CHRIS_vs_CKDGen.png",
 #------------#
 # Fig. 3A: variance of replicated vs. not-replicated loci 
 fig_3a <- repSNPs_EA_compar %>%
-  mutate(`Locus replication` = if_else(Locus %in% unique(repSNPs_tmp$Locus),
-                                       "Replicated", "Not-Replicated"),
+  mutate(locus_me = if_else(Locus %in% unique(repSNPs_tmp$Locus),
+                         "Replicated", "Not-Replicated"),
          locus_rep = if_else(Locus %in% unique(repSNPs_tmp$Locus), Locus, "")) %>%
-  ggplot(aes(var_CHRIS, var_CKDGen)) +
+  ggplot(aes(var_CHRIS, var_CKDGen, color = locus_me)) +
   geom_abline(slope = 1) +
-  geom_hline(yintercept = 0, color = "gray40", lty = 2)+
-  geom_vline(xintercept = 0, color = "gray40", lty = 2)+
-  geom_point(aes(color = `Locus replication`), size = 2) +
+  geom_hline(yintercept = 0, color = "gray10", lty = 1)+
+  geom_vline(xintercept = 0, color = "gray10", lty = 1)+
+  geom_point(alpha = 0.9, size = 2) +
   geom_text(aes(label = locus_rep), color = "gray20", fontface = 3, vjust = 1.6) +
   #ggrepel::geom_text_repel(aes(label = locus_rep),  check_overlap = TRUE) +
   scale_color_manual(values = c("steelblue2", "royalblue4")) +
   scale_x_continuous(breaks = seq(0,0.0035, 0.0005), limits = c(0,0.0034)) +
   scale_y_continuous(breaks = seq(0,0.0020, 0.0005)) +
-  labs(x = "\nVariance explained by lead variants at 147 loci in CHRIS",
-       y = "Variance explained by lead variants at 147 loci in CKDGen\n") +
+  labs(
+    color = "Locus",
+    x = "\nVariance explained by lead variants at 147 loci in CHRIS",
+    y = "Variance explained by lead variants at 147 loci in CKDGen\n") +
   ylim(0, 0.0020) +
-  theme_classic() +
-  theme(legend.position = c(.3, .95),
+  theme(panel.background = element_blank(),
+        legend.position = c(.9, .95),
         legend.text  = element_text(size = 12),
-        legend.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 13, face = "bold"),
         axis.text  = element_text(size = 11,  face = "bold"),
         axis.title = element_text(size = 13, face = "bold"),
         plot.margin = margin(l = 6, r = 6, t = 8, b = 6, unit = "mm"))
 
 ggsave("05-Dec-23_violin_plot_variance_explained_in_147_loci_EA.png", 
        last_plot(), width = 9, height = 6.5, dpi = 300, units = "in")
+
 
 #-----------------------------------------------------#
 #-------            Figure 3 A&B              --------
@@ -72,8 +75,8 @@ ggsave("05-Dec-23_violin_plot_variance_explained_in_147_loci_EA.png",
 cowplot::plot_grid(fig_3a, fig_3b, labels = c("A", "B"), ncol = 1, nrow = 2)
 
 
-ggsave("09-Dec-23_paper_revised_figure_3_chris_vs_ckdgen_hor.png",
-       width = 9.5, height = 15, dpi = 400, units = "in")
+ggsave("11-Dec-23_paper_revised_figure_3_chris_vs_ckdgen_hor.png",
+       width = 10, height = 15, dpi = 400, units = "in")
 
 
 #------------#

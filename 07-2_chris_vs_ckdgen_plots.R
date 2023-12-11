@@ -45,7 +45,7 @@ fig_3b <- repSNPs %>%
   # annotate("text", x = 1.15, y = 4, size = 4, label = "IGF1R") +
   # annotate("text", x = 1.2, y = 2.8, size = 4, label = "PIPK1B") +
   labs(x = "\nCHRIS-to-CKDGen MAF ratio\n", 
-       y = "CHRIS-to-CKDGen effect ratio\n") + 
+       y = "\nCHRIS-to-CKDGen effect ratio\n") + 
   #theme_minimal()+ #theme_light(base_size = 10)+ #lims(y = c(1, 6)) +
   theme(panel.background = element_rect(fill = "white"),
         panel.grid.major.y = element_line(linetype = 'solid', color = "grey80", size = .15),
