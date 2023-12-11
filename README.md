@@ -178,7 +178,11 @@ zgrep -E 'rs74748843|rs807624$|rs28817415|rs10062079|rs3812036|rs57514204|rs8191
 
 - I got sick, probably covid-19 infection and couldn't work on the shroom3 draft paper. (Sat, 20:55, 09-Dec-23) 
 
-- Just recovered and after submitting paper revision tomorrow noon, I will work on the 2nd paper to finish the discussion (Sun, 23:22, 12-Dec-23).
+- Just recovered and after submitting paper revision tomorrow noon, I will work on the 2nd paper to finish the discussion (Sun, 23:22, 10-Dec-23).
+
+- Fig. 3A was modified and Fig.3 was changed accordingly(Mon, 16:30, 11-Dec-23).
+
+- We submitted the revised manuscript to the journal (Mon, 23:59, 11-Dec-23).
 
 Dariush
 
