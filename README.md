@@ -184,7 +184,6 @@ zgrep -E 'rs74748843|rs807624$|rs28817415|rs10062079|rs3812036|rs57514204|rs8191
 
 - We submitted the revised manuscript to the journal (Mon, 23:59, 11-Dec-23).
 
-- Just started to finish the discussion of the draft (Sun, 23:35, 17-Dec-23).
 
 Dariush
 
