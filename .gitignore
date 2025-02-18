@@ -15,3 +15,5 @@ README.html
 slurm*
 *.txt
 *.pdf
+inputs/
+outputs/
