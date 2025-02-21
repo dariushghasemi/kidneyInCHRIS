@@ -11,7 +11,7 @@ source("00-0_configuration.R") # to load functions and vectors
 path_med_res <- "~/projects/kidneyInCHRIS/inputs/11-Jan-23_SNP-wise_summary_of_mediation_analysis_steps.csv"
 
 # outputs
-outliers_plot <- "20-Feb-25_figure_4_linerange_lead_variants.jpg"
+outliers_plot <- "~/projects/kidneyInCHRIS/outputs/21-Feb-25_Figure_4_linerange_lead_variants.jpg"
 
 #------------#
 # read results of mediation analysis steps
@@ -23,14 +23,6 @@ res_mediation <- data.table::fread(path_med_res)
 #------          Figure 4: line range           ------
 #-----------------------------------------------------#
 
-
-# Taking effect size of the top SNPs in GWAS
-# by subsetting summary of Mediation-A
-sum3steps_long_eGFR <- sum3steps_long %>%
-  filter(SNPid %in% tagSNPs$SNPid, Trait == "SCr") %>% 
-  mutate(Locus_reordered = Locus_factor(Locus))
-
-#---------#
 # Reorder Trait based on frequency of outlier effect
 outlier_freq <- res_mediation %>%
   dplyr::filter(SNPid %in% target_snps) %>% # taking lead variants
@@ -74,10 +66,6 @@ plt_outlier <- res_mediation %>%
     xmin = Estimate_Step2 - SE_Step2,
     xmax = Estimate_Step2 + SE_Step2
     )) +
-  # geom_vline(data = sum3steps_long_eGFR,
-  #            aes(xintercept = Estimate_GWAS), 
-  #            color = "steelblue3",
-  #            lty = 1) +
   geom_vline(xintercept = 0, lty = 2, color = "grey50")+
   geom_pointrange(aes(color = outlier), show.legend = F, fatten = 1.2) +
   scale_color_manual(values = c("grey50", "tomato3")) +
@@ -99,4 +87,4 @@ plt_outlier <- res_mediation %>%
     )
 
 
-ggsave(outliers_plot, plot = plt_outlier, width = 15, height = 9, dpi = 300, units = "in")
+ggsave(outliers_plot, plot = plt_outlier, width = 15, height = 9, dpi = 500, units = "in")
