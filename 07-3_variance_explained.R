@@ -4,6 +4,25 @@
 
 # Created on December 2023
 
+library(tidyverse)
+library(cowplot)
+source("00-0_configuration.R") # to load significant loci in CHRIS "loci_CHRIS"
+
+
+#------------#
+# inputs
+path_st2 <- "~/projects/kidneyInCHRIS/inputs/07-Dec-23_Suppl._Table2_147_CKDGen_Loci.csv"
+
+# outputs
+scatter_all <- "03-Dec-23_violin_plot_variance_explained_in_CHRIS_vs_CKDGen.png"
+scatter_replicated <- "~/projects/kidneyInCHRIS/outputs/21-Feb-25_Figure_3a_variance_explained_in_147_loci_EA.png"
+variance_maf_comparison <- "~/projects/kidneyInCHRIS/outputs/21-Feb-25_Figure_3_chris_vs_ckdgen.jpg"
+
+#------------#
+# read Suppl. Table 2
+st2 <- data.table::fread(path_st2)
+
+
 #-----------------------------------------------------#
 #-------         Variance explained           --------
 #-----------------------------------------------------#
@@ -15,14 +34,21 @@
 # This script uses the results attained 
 # in `07-1_chris_vs_ckdgen.R` file: repSNPs_EA_Suppl2
 
-# compute variance in CHRIS and in CKDGen
-repSNPs_EA_compar <- repSNPs_EA_Suppl2 %>%
-  mutate(var_CHRIS  = (Beta_CHRIS_tmp ^ 2) * ((2*EAF_CHRIS *(1 - EAF_CHRIS)) / 0.016),
-         var_CKDGen = (Beta_CKDGen_EA ^ 2) * ((2*EAF_CKDGen_EA *(1 - EAF_CKDGen_EA))/ 0.016)) 
+#------------#
+# compute variance explained in CHRIS and in CKDGen EU ancestry
+st2_var_expl <- st2 %>%
+  dplyr::rename(Beta_CKDGen = Beta_CKDGen_EA, Beta_CHRIS = Beta_CHRIS_tmp) %>%
+  mutate(
+    var_CHRIS  = (Beta_CHRIS  ^ 2) * ((2*EAF_CHRIS *(1 - EAF_CHRIS)) / 0.016),
+    var_CKDGen = (Beta_CKDGen ^ 2) * ((2*EAF_CKDGen_EA *(1 - EAF_CKDGen_EA))/ 0.016),
+    locus_me   = if_else(Locus %in% loci_CHRIS, "Significant", "Non-significant"),
+    locus_rep  = if_else(Locus %in% loci_CHRIS, Locus, ""),
+    locus_rep  = str_replace(locus_rep, "PDILT", "UMOD-PDILT")
+    )
 
 #------------#
-# variance explained by each variant
-repSNPs_EA_compar %>%
+# variance explained by each variant -> for slides
+plt_varexpl_all <- st2_var_expl %>%
   ggplot(aes(var_CHRIS, var_CKDGen)) +
   geom_abline(slope = 1) +
   geom_point(color = "steelblue2", size = 2) +
@@ -32,15 +58,11 @@ repSNPs_EA_compar %>%
   theme(axis.text  = element_text(size = 8,  face = "bold"),
         axis.title = element_text(size = 12, face = "bold"))
 
-ggsave("03-Dec-23_violin_plot_variance_explained_in_CHRIS_vs_CKDGen.png", 
-       last_plot(), width = 8, height = 5.5, dpi = 300, units = "in")
+ggsave(scatter_all, plot = plt_varexpl_all, width = 8, height = 5.5, dpi = 300, units = "in")
 
 #------------#
 # Fig. 3A: variance of replicated vs. not-replicated loci 
-fig_3a <- repSNPs_EA_compar %>%
-  mutate(locus_me = if_else(Locus %in% unique(repSNPs_tmp$Locus),
-                         "Replicated", "Not-Replicated"),
-         locus_rep = if_else(Locus %in% unique(repSNPs_tmp$Locus), Locus, "")) %>%
+fig_3a <- st2_var_expl %>%
   ggplot(aes(var_CHRIS, var_CKDGen, color = locus_me)) +
   geom_abline(slope = 1) +
   geom_hline(yintercept = 0, color = "gray10", lty = 1)+
@@ -54,76 +76,32 @@ fig_3a <- repSNPs_EA_compar %>%
   labs(
     color = "Locus",
     x = "\nVariance explained by lead variants at 147 loci in CHRIS",
-    y = "Variance explained by lead variants at 147 loci in CKDGen\n") +
+    y = "Variance explained by lead variants at 147 loci in CKDGen\n"
+    ) +
   ylim(0, 0.0020) +
-  theme(panel.background = element_blank(),
-        legend.position = c(.9, .95),
-        legend.text  = element_text(size = 12),
-        legend.title = element_text(size = 13, face = "bold"),
-        axis.text  = element_text(size = 11,  face = "bold"),
-        axis.title = element_text(size = 13, face = "bold"),
-        plot.margin = margin(l = 6, r = 6, t = 8, b = 6, unit = "mm"))
+  theme(
+    panel.background = element_blank(),
+    legend.position = c(.9, .8),
+    legend.key.size  = unit(0.9, 'cm'),
+    legend.key.width = unit(0.7, 'cm'),
+    legend.text  = element_text(size = 12),
+    legend.title = element_text(size = 13, face = "bold"),
+    axis.text  = element_text(size = 11,  face = "bold"),
+    axis.title = element_text(size = 13, face = "bold"),
+    plot.margin = margin(l = 6, r = 6, t = 8, b = 6, unit = "mm")
+    )
 
-ggsave("05-Dec-23_violin_plot_variance_explained_in_147_loci_EA.png", 
-       last_plot(), width = 9, height = 6.5, dpi = 300, units = "in")
+
+ggsave(scatter_replicated, plot = fig_3a, width = 9, height = 6.5, dpi = 300, units = "in")
 
 
 #-----------------------------------------------------#
 #-------            Figure 3 A&B              --------
 #-----------------------------------------------------#
 
-cowplot::plot_grid(fig_3a, fig_3b, labels = c("A", "B"), ncol = 1, nrow = 2)
+# join two plots for paper
+fig3 <- cowplot::plot_grid(fig_3a, fig_3b, labels = c("A", "B"), ncol = 1, nrow = 2)
 
+# save combined plot for paper
+ggsave(variance_maf_comparison, plot = fig3, width = 10, height = 15, dpi = 500, units = "in")
 
-ggsave("11-Dec-23_paper_revised_figure_3_chris_vs_ckdgen_hor.png",
-       width = 10, height = 15, dpi = 400, units = "in")
-
-
-#------------#
-# violin plot: variance explained in CHRIS vs. CKDGen
-repSNPs_EA_compar %>%
-  pivot_longer(cols = c(var_CHRIS, var_CKDGen),
-               names_to = c("quantity", "study"),
-               names_pattern = "(var)_(CHRIS|CKDGen)$",
-               values_to = "variance") %>%
-  ggplot(aes(study, variance)) +
-  geom_violin(aes(fill = study), color = NA, trim = F, show.legend = F)+
-  geom_boxplot(color = "royalblue4", width = 0.05, outlier.shape = NA) +
-  scale_fill_manual(values = c("steelblue2", "red3")) +
-  labs(x = NULL, y = "Variance explained by lead variant at each locus") +
-  theme_classic() +
-  theme(legend.position = c(.9, .8),
-        axis.text.x  = element_text(size = 12,  face = "bold"),
-        axis.text.y  = element_text(size = 8,  face = "bold"),
-        axis.title = element_text(size = 12, face = "bold"))
-
-
-ggsave("03-Dec-23_violin_plot_variance_explained_in_CHRIS_vs_CKDGen.png", 
-       last_plot(), width = 5, height = 5.5, dpi = 300, units = "in")
-
-
-#------------#
-# compare SNPs effect sizes in CHRIS vs. CKDGen
-repSNPs_EA_compar %>%
-  mutate(`Locus replication` = if_else(Locus %in% unique(repSNPs_tmp$Locus),
-                                       "Replicated", "Not-Replicated"),
-         locus_rep = if_else(Locus %in% unique(repSNPs_tmp$Locus), Locus, "")) %>%
-  ggplot(aes(Beta_CHRIS_tmp, Beta_CKDGen,
-             xmin = Beta_CHRIS_tmp - SE_CHRIS,
-             xmax = Beta_CHRIS_tmp + SE_CHRIS)) +
-  geom_abline(slope = 1) +
-  geom_hline(yintercept = 0, color = "gray20") +
-  geom_vline(xintercept = 0, color = "gray20") +
-  geom_errorbar(aes(ymin = Beta_CKDGen - SE_CKDGen,
-                    ymax = Beta_CKDGen + SE_CKDGen), color = "steelblue3") +
-  geom_pointrange(color = "royalblue4", alpha = .5) +
-  geom_text(aes(label = locus_rep), size = 3.5, color = "gray20", fontface = 4, vjust = 1.6) +
-  #geom_point(color = "steelblue4", size = 2) +
-  labs(x = "Effect of lead variant in CHRIS",
-       y = "Effect of lead variant in CKDGen") +
-  theme_classic() +
-  theme(axis.text  = element_text(size = 8,  face = "bold"),
-        axis.title = element_text(size = 12, face = "bold"))
-
-ggsave("03-Dec-23_linerange_plot_variants_effects_in_CHRIS_vs_CKDGen.png", 
-       last_plot(), width = 13, height = 8.5, dpi = 300, units = "in")
