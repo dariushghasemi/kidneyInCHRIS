@@ -25,21 +25,6 @@ library(purrr)
 # Storing the variants name (SNPid)
 targets <- vcfReg %>% select(starts_with("chr")) %>% colnames()
 
-# most CHRIS significant variant at 11 replicated loci
-leadingSNPs <- c("chr1:10670853",  "chr2:15648568", 
-                 "chr4:76492991",  "chr5:39385539",
-                 "chr5:177386403", "chr7:77733187", 
-                 "chr8:23894869",  "chr9:68819791",
-                 "chr11:78339803", "chr15:98729803")
-
-
-# CKDGen lead variant at 11 replicated loci
-CKDGenSNPs <- c("chr1:10670853",  "chr2:15642347",
-                "chr4:76480299",  "chr5:39377763",
-                "chr5:177386403", "chr7:77793266",
-                "chr8:23890907",  "chr9:68817258",
-                "chr11:78312060", "chr15:98733292")
-
 
 
 #-----------------------------------------------------#
@@ -60,50 +45,6 @@ CKDGenSNPs <- c("chr1:10670853",  "chr2:15642347",
 #-----------------------------------------------------#
 
 
-# Step 2 function: trait-adjusted effect of variants on eGFRcrea
-getCoefs2table <- function(mytrait, mytarget, myformula, data)
-  {
-  map2_df(
-    .x = mytrait,
-    .y = myformula,
-    function(mytrait, myformula)
-      {
-      trait <- data[, mytrait]
-      res0  <- map_df(
-        mytarget,
-        function(mySNP)
-          {
-          SNP <- data[, mySNP]
-          myformula <- as.formula(myformula)
-          m <- lm(myformula, data = data)
-          p <- summary(m)$coefficients[2, c(1,2,4)] #Beta, se, Pvalue
-          names(p) <- str_replace_all(
-            names(p),
-            c("Estimate"   = "Estimate",
-              "Std. Error" = "SE",
-              "Pr\\([^\\(]*\\)" = "Pvalue")
-            )
-          p$SNPid <- mySNP
-          return(p)
-        }
-      )
-      res0$Trait <- mytrait
-      res1 <- repSNPs %>%
-        select(SNPid, Locus) %>%
-        inner_join(res0, by = c("SNPid")) %>%
-        select(SNPid, Locus, Trait, everything())
-      return(res1)
-      }
-  )
-}
-
-#------------#
-#outlier detection function for SNPs effects of eGFRw.res.ln
-is_outlier <- function(x) { 
-  return(x < quantile(x, 0.10) - 1.5 * IQR(x) | x > quantile(x, 0.90) + 1.5 * IQR(x))
-}
-
-#------------#
 # Forming principal components terms
 PCs <- paste0("PC", 1:10, collapse = " + ")
 
@@ -131,41 +72,6 @@ results_Step2_long <-  getCoefs2table(
 
 # Mediation Analysis -> Step 3: trait as the outcome
 # The direct association between the SNP and quantitative traits
-
-#------------#
-
-# Step 2 function: check SNP association with a trait
-getCoefs3table <- function(mytrait, mytarget, myformula, mydata){
-    res3 <- map2_dfr(
-      .x = mytrait,
-      .y = myformula,
-      .f = function(trait, formula){
-        res1 <- map_dfr(
-          .x = mytarget,
-          .f = function(SNP)
-          {
-            m <- lm(as.formula(formula), data = mydata)
-            p <- summary(m)$coefficients[2, c(1,2,4)]
-            return(p)
-          }
-        )
-        res2 <- as.data.frame(res1)
-        colnames(res2) <- c("Estimate",
-                            "SE",
-                            "Pvalue")
-        Nsnp       <- length(mytarget)
-        res2$SNPid <- rep(colnames(mytarget)[1:Nsnp], 1)
-        return(res2)
-      }
-    )
-    res3$pheno <- rep(colnames(mytrait), each = length(unique(res3$SNPid)))
-    res4 <- repSNPs %>% 
-      select(SNPid, Locus) %>% 
-      inner_join(res3, by = "SNPid")
-    return(res4)
-}
-
-#------------#
 
 # Step 3 results: Long format
 results_Step3_long <- getCoefs3table(
