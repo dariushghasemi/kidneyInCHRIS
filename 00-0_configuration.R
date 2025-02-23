@@ -3,6 +3,23 @@
 library(tidyverse)
 
 #------------#
+# Defining quantitative traits for phenome-wide scan
+quantVars <- c(#"Age",
+  "Height","Weight","BMI","Body_Fat","Visceral_Fat",
+  "SBP", "DBP", "Pulse_Rate", "HbA1c", #"Birth_Weight1", "Pregnancy1",
+  "SAlb", "SCr", "UAlb", "UCr", "UACR",
+  "PTT", "INR_PT", "APTT_ratio", "APTT", "Fibrinogen", "AT", "BGlucose",
+  "Urate", "AST_GOT", "ALT_GPT", "GGT", "ALP", "TB", "DB", "Lipase", "TC",
+  "HDL", "LDL", "TG", "Sodium", "Potassium", "Chlorine", #"Calcium_mg",
+  "Calcium", "Phosphorus", "Magnesium", "Iron", "Ferritin", 
+  "Transferrin", "TIBC" , "TS", "Homocyst", "CRP", "TSH", "FT3", "FT4", 
+  "Cortisol", "WBC","RBC","HGB","HCT", "MCV","MCH","MCHC","RDW","PLT","MPV",
+  "Neutrophils","Lymphocytes","Monocytes","Eosinophils","Basophils",
+  #"Neutrophils2","Lymphocytes2","Monocytes2","Eosinophils2","Basophils2",
+  "AntiTPO","Urine_pH","UGlucose","UProteins","UHGB"
+)
+
+#------------#
 # lead SNPs in Table 2 of paper
 # CHRIS: the most significant variant at 11 replicated loci -> equivalent to tagSNPs
 target_snps <- c(
@@ -160,6 +177,30 @@ getCoefs3table <- function(mytrait, mytarget, myformula, mydata){
 }
 
 #------------#
+# get variants effect in lm(outcome ~ variant + ...)
+getCoefs3lm <- function(mytrait, mytarget, myformula, mydata){
+  res3 <- map2_dfr(
+    .x = mytrait,
+    .y = myformula,
+    .f = function(trait, formula){
+      res1 <- map_dfr(
+        .x = mytarget,
+        .f = function(SNP)
+        {
+          m <- lm(as.formula(formula), data = mydata)
+          p <- summary(m)$coefficients[2, c(1,2,4)]
+          return(p)
+        }
+      )
+      res2 <- as.data.frame(res1)
+      colnames(res2) <- c("Estimate", "SE", "Pvalue")
+      Nsnp       <- length(mytarget)
+      res2$SNPid <- rep(colnames(mytarget)[1:Nsnp], 1)
+      return(res2)
+    }
+  )
+  return(res3)
+}
 
 #------------#
 
