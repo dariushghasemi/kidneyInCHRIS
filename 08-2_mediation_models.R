@@ -9,6 +9,12 @@
 library(tidyverse)
 library(stringr)
 library(purrr)
+source("08-1_mediation_data.R") # to load vcfReg data file
+
+
+# outputs
+mediation_table <- "11-Jan-23_SNP-wise summary of mediation analysis steps.csv"
+
 
 #-----------------------------------------------------#
 #-------           Analysis Pipeline           -------
@@ -21,11 +27,6 @@ library(purrr)
 # step 3:    trait ~ SNP + PC1:10
 # step 3:    trait ~ SNP + ln(eGFR) + PC1:10
 
-#------------#
-# Storing the variants name (SNPid)
-targets <- vcfReg %>% select(starts_with("chr")) %>% colnames()
-
-
 
 #-----------------------------------------------------#
 #------      Step 1: association with eGFR     -------
@@ -37,7 +38,6 @@ targets <- vcfReg %>% select(starts_with("chr")) %>% colnames()
 # /home/dghasemisemeskandeh/projects/gwas/replicationAnalysis/scripts/
 # The summary or final results of replication analysis can be found in: 
 # 
-
 
 
 #-----------------------------------------------------#
@@ -136,10 +136,5 @@ sum3steps_long <- repSNPs %>%
   as_tibble()
 
 
-write.csv(sum3steps_long,
-          "11-Jan-23_SNP-wise summary of mediation analysis steps.csv",
-          row.names = FALSE, quote = FALSE)
-
-#-----------------------------------------------------#
-#                       The end                       #
-#-----------------------------------------------------#
+# save mediation results
+write.csv(sum3steps_long, file = mediation_table, row.names = FALSE, quote = FALSE)

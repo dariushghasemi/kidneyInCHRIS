@@ -5,7 +5,10 @@
 library(tidyverse)
 library(stringr)
 library(purrr)
+source("00-0_configuration.R")
 
+#------------#
+# inputs
 path_dosage <- "inputs/163Targets.txt"
 path_pcs <- "../HaploReg/data/CHRIS13K.GT.evecs"
 path_clinicals <- "../HaploReg/data/chris_q-norm.csv"
@@ -51,6 +54,10 @@ vcfReg <- chris %>%
     TSH_cat, eGFRw.log.Res, eGFRw.log, eGFR,
     all_of(quantVars)
   ) %>%
-  inner_join(vcfmod,  by = "AID") %>%
-  inner_join(pcs, by = "AID", all = FALSE)
+  right_join(vcfmod, by = "AID") %>%
+  inner_join(pcs, by = "AID") # n=10,758
+
+#------------#
+# Storing the variants name (SNPid)
+targets <- vcfReg %>% select(starts_with("chr")) %>% colnames()
 
