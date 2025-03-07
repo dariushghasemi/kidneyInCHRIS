@@ -1,12 +1,13 @@
 
 
+
+# outputs
 out_tbl_quantitativ <- "13-Feb-23_Interaction of kidney with TSH (eGFRw.log-TSH) adjusted for sex age PCs.csv"
 out_tbl_categorized <- "13-Feb-23_Interaction of kidney with thyroid disease (eGFRw.log-TSH_cat) adjusted for sex age PCs.csv"
 out_tbl_centralized <- "01-Feb-23_Kideny interaction with thyroid adj for sex and age (SNP-TSH)_wide format.csv"
+out_tbl_centlz_long <- "01-Feb-23_Kideny interaction with centralized thyroid (SNP-TSH)_long format.csv"
 
 #------------------#
-# variables and constants
-
 # Forming principal components term of the model 
 PCs <- paste0("PC", 1:10, collapse = " + ")
 
@@ -39,24 +40,8 @@ regresModel <- function(data, mySNP, formula, vecTraits){
 #------            TSH-SNP interaction          ------
 #-----------------------------------------------------#
 
-# Test interaction model
-# summary(
-#   lm(
-#     eGFRw.log.Res ~ `chr1:10599281` * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
-#     data = vcfReg_TSHmod)
-# )$coefficients[c(2:3,16), c(1,2,4)]
-
-#---------#
-# Testing regression model function
-#regresModel(vcfReg_TSHmod,
-#            targets[1],  #vcfReg_TSHmod[targets[1:3]]
-#            paste("eGFRw.log.Res ~ SNP * TSH + Sex + Age + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10"))
-
-
-#---------#
 # Linear interaction: TSH-SNP
-
-# Iterating intearction model
+# iterating model
 results_Kidney_TSH <- map_dfr(
   targets, function(SNP) {
     regresModel(
@@ -72,20 +57,14 @@ results_Kidney_TSH <- map_dfr(
 # Save the results of linear interaction model
 write.csv(results_Kidney_TSH, file = out_tbl_quantitativ, row.names = FALSE, quote = FALSE)
 
-# #---------#
-# # Table XX of the paper 
-# results_Kidney_TSH %>%
-#   filter(SNPid %in% tagSNPs$SNPid) %>% View
-
 
 
 #-----------------------------------------------------#
 #-------------- SNP:TSH_cat interaction ---------------
 #-----------------------------------------------------#
 
-
 # Non-linear interaction: TSH_cat-SNP
-
+# iterating model
 results_Kidney_TSH_cat <- map_dfr(
   targets, 
   function(SNP) {
@@ -162,7 +141,7 @@ vcfReg_TSHmod %>%
   mutate(associated = ifelse(p.value < 0.05/11, "Yes", "No")) %>% View
 #filter(associated == "Yes") %>% View
 filter(str_detect(term, "Dosage:")) %>% View
-#write.csv("01-Feb-23_Kideny interaction with centralized thyroid (SNP-TSH)_long format.csv", row.names = FALSE, quote = FALSE)
+#write.csv(out_tbl_centlz_long, row.names = FALSE, quote = FALSE)
 pivot_wider(id_cols = c(Locus, SNPid),
             names_from = term,
             names_glue = "{term}_{.value}",
