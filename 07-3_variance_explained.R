@@ -15,7 +15,7 @@ path_st2 <- "~/projects/kidneyInCHRIS/inputs/07-Dec-23_Suppl._Table2_147_CKDGen_
 
 # outputs
 scatter_all <- "03-Dec-23_violin_plot_variance_explained_in_CHRIS_vs_CKDGen.png"
-scatter_replicated <- "~/projects/kidneyInCHRIS/outputs/21-Feb-25_Figure_3a_variance_explained_in_147_loci_EA.png"
+scatter_replicated <- "~/projects/kidneyInCHRIS/outputs/25-Feb-25_Figure_3a_variance_explained_in_147_loci_EA.png"
 variance_maf_comparison <- "~/projects/kidneyInCHRIS/outputs/21-Feb-25_Figure_3_chris_vs_ckdgen.jpg"
 
 #------------#
@@ -63,36 +63,37 @@ ggsave(scatter_all, plot = plt_varexpl_all, width = 8, height = 5.5, dpi = 300, 
 #------------#
 # Fig. 3A: variance of replicated vs. not-replicated loci 
 fig_3a <- st2_var_expl %>%
-  ggplot(aes(var_CHRIS, var_CKDGen, color = locus_me)) +
+  ggplot(aes(var_CHRIS, var_CKDGen, color = locus_me, label = locus_rep)) +
   geom_abline(slope = 1) +
   geom_hline(yintercept = 0, color = "gray10", lty = 1)+
   geom_vline(xintercept = 0, color = "gray10", lty = 1)+
-  geom_point(alpha = 0.9, size = 2) +
-  geom_text(aes(label = locus_rep), color = "gray20", fontface = 3, vjust = 1.6) +
-  #ggrepel::geom_text_repel(aes(label = locus_rep),  check_overlap = TRUE) +
+  geom_point(alpha = 0.8, size = 5) +
+  #geom_text(aes(label = locus_rep), size=6, color = "gray20", fontface = 3, vjust = -.8, hjust=-.05) +
+  ggrepel::geom_text_repel(size=7, fontface = 3, show.legend=F) +
   scale_color_manual(values = c("steelblue2", "royalblue4")) +
   scale_x_continuous(breaks = seq(0,0.0035, 0.0005), limits = c(0,0.0034)) +
   scale_y_continuous(breaks = seq(0,0.0020, 0.0005)) +
   labs(
     color = "Locus",
-    x = "\nVariance explained by lead variants at 147 loci in CHRIS",
-    y = "Variance explained by lead variants at 147 loci in CKDGen\n"
+    x = "\nVariance explained in CHRIS",
+    y = "Variance explained in CKDGen\n"
     ) +
   ylim(0, 0.0020) +
   theme(
     panel.background = element_blank(),
-    legend.position = c(.9, .8),
+    axis.ticks.length = unit(0.2, 'cm'),
+    legend.position = c(.2, .9),
     legend.key.size  = unit(0.9, 'cm'),
     legend.key.width = unit(0.7, 'cm'),
-    legend.text  = element_text(size = 12),
-    legend.title = element_text(size = 13, face = "bold"),
-    axis.text  = element_text(size = 11,  face = "bold"),
-    axis.title = element_text(size = 13, face = "bold"),
-    plot.margin = margin(l = 6, r = 6, t = 8, b = 6, unit = "mm")
+    legend.text  = element_text(size = 14),
+    legend.title = element_text(size = 14, face = "bold"),
+    axis.text  = element_text(size = 13,  face = "bold"),
+    axis.title = element_text(size = 16, face = "bold"),
+    plot.margin = margin(l = 4, r = 10, t = 6, b = 4, unit = "mm")
     )
 
 
-ggsave(scatter_replicated, plot = fig_3a, width = 9, height = 6.5, dpi = 300, units = "in")
+ggsave(scatter_replicated, plot = fig_3a, width = 9, height = 6.5, dpi = 500, units = "in")
 
 
 #-----------------------------------------------------#
