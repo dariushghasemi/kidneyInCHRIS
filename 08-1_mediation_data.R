@@ -5,13 +5,13 @@
 library(tidyverse)
 library(stringr)
 library(purrr)
-source("00-0_configuration.R")
+source("~/projects/kidneyInCHRIS/scripts/00-0_configuration.R") #to load quantVars
 
 #------------#
 # inputs
-path_dosage <- "inputs/163Targets.txt"
-path_pcs <- "../HaploReg/data/CHRIS13K.GT.evecs"
-path_clinicals <- "../HaploReg/data/chris_q-norm.csv"
+path_dosage <- "~/projects/kidneyInCHRIS/inputs/163Targets.txt"
+path_pcs    <- "~/projects/kidneyInCHRIS/inputs/CHRIS13K.GT.evecs"
+path_clinicals <- "~/projects/kidneyInCHRIS/inputs/chris_q-norm.csv"
 
 #------------------------------------------------------#
 #------               Reading data              -------
@@ -34,7 +34,7 @@ vcfmod <- vcf %>%
   dplyr::mutate_at("MARKER_ID", str_replace_all, ":[A-T-C-G]+:[A-T-C-G]+", "") %>%
   dplyr::rename(SNPid = MARKER_ID) %>%
   pivot_wider(names_from = "SNPid", values_from= "Dosage") %>% 
-  dplyr::select(-c("chr11:78335892", "chr11:78392251"))
+  dplyr::select(-c("chr11:78335892", "chr11:78392251")) # remove variants that are not among 163 signif variants
 
 
 #------------------------------------------------------#
