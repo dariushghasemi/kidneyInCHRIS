@@ -32,7 +32,7 @@ ________________________________________________________________________________
 The findings from this project contribute to the ongoing TrainCKDis Horizon 2020 EU Project. Our work is currently published on medrxiv with further refinements based on peer review and manuscript revisions:
 - **preprinted manuscript version 1**: [Systematic mediation and interaction analyses in an individual population study help characterize kidney function genetic loci](https://www.medrxiv.org/content/10.1101/2023.04.15.23288540v1)
 - **preprinted manuscript version 2**: [Systematic mediation and interaction analyses of kidney function genetic loci in a general population study](https://www.medrxiv.org/content/10.1101/2023.04.15.23288540v2)
-
+- **published manuscript on pLoS One**: []()
 
 
 Dariush Ghasemi
